@@ -1,0 +1,1210 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self' file: data: blob:; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; connect-src 'self' https://xigwlofqkmiibzbongkn.supabase.co wss://xigwlofqkmiibzbongkn.supabase.co; font-src 'self' data:;" />
+  <title>Cerrado Imobiliária — Gestão imobiliária</title>
+  <meta name="theme-color" content="#00263F" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Cerrado" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png" />
+  <link rel="icon" type="image/png" href="assets/icons/icon-192.png" />
+  <link rel="stylesheet" href="vendor/leaflet/leaflet.css" />
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="avatar.css" />
+  <link rel="stylesheet" href="crm.css" />
+  <link rel="stylesheet" href="corretor-ui.css" />
+  <link rel="stylesheet" href="comissoes.css" />
+  <link rel="stylesheet" href="financeiro.css" />
+  <link rel="stylesheet" href="extras.css" />
+</head>
+<body>
+  <div id="bootView" class="boot-view"><img src="logo.png" alt="" /><span>Carregando…</span></div>
+  <section id="loginView" class="login-view" hidden>
+    <div class="login-brand"><img src="logo.png" alt="Cerrado Imobiliária" /></div>
+    <form id="loginForm" class="login-card">
+      <span class="eyebrow">CERRADO IMOBILIÁRIA</span>
+      <h1>Acesso ao sistema</h1>
+      <p>Entre com sua conta autorizada para administrar os imóveis.</p>
+      <label><span>E-mail</span><input id="emailInput" type="email" autocomplete="username" required /></label>
+      <label><span>Senha</span><input id="passwordInput" type="password" autocomplete="current-password" required /></label>
+      <button class="primary-button" type="submit">Entrar</button>
+      <button id="showRecoverButton" class="text-button" type="button">Esqueci minha senha</button>
+      <div id="loginMessage" class="form-message" hidden></div>
+    </form>
+    <form id="recoverForm" class="login-card" hidden>
+      <span class="eyebrow">RECUPERAR SENHA</span>
+      <h1>Esqueci minha senha</h1>
+      <p>Informe o e-mail da sua conta. Vamos enviar um link para você definir uma senha nova.</p>
+      <label><span>E-mail</span><input id="recoverEmailInput" type="email" autocomplete="username" required /></label>
+      <button id="recoverSubmitButton" class="primary-button" type="submit">Enviar link de recuperação</button>
+      <button id="backFromRecoverButton" class="text-button" type="button">Voltar ao login</button>
+      <div id="recoverMessage" class="form-message" hidden></div>
+    </form>
+    <form id="recoverNewPasswordForm" class="login-card" hidden>
+      <span class="eyebrow">NOVA SENHA</span>
+      <h1>Defina sua nova senha</h1>
+      <p>Você veio pelo link de recuperação. Escolha uma senha nova (mínimo 6 caracteres).</p>
+      <label><span>Nova senha</span><input id="recoverNewPasswordInput" type="password" autocomplete="new-password" required minlength="6" /></label>
+      <label><span>Repita a nova senha</span><input id="recoverNewPasswordInput2" type="password" autocomplete="new-password" required minlength="6" /></label>
+      <button id="recoverNewPasswordButton" class="primary-button" type="submit">Salvar nova senha</button>
+      <div id="recoverNewPasswordMessage" class="form-message" hidden></div>
+    </form>
+    <p class="login-footer">CERRADO IMOBILIÁRIA — GESTÃO IMOBILIÁRIA · tecnologia SKL Geo Soluções</p>
+  </section>
+
+  <section id="carteiraPicker" class="login-view" hidden>
+    <div class="login-card picker-card">
+      <span class="eyebrow">SELECIONE UMA CARTEIRA</span>
+      <h1>Onde você quer trabalhar agora?</h1>
+      <p>Sua conta tem acesso a mais de uma carteira de imóveis. Escolha uma para continuar.</p>
+      <div id="carteiraPickerList" class="empreendimento-list"></div>
+    </div>
+  </section>
+
+  <section id="appView" class="app-view" hidden>
+    <aside class="sidebar">
+      <div class="sidebar-brand"><img src="logo.png" alt="Cerrado Imobiliária" /><span>Cerrado</span></div>
+      <nav id="mainNav">
+        <button class="nav-button active" data-page="dashboard"><span>◫</span> Visão geral</button>
+        <button class="nav-button" data-page="negociacoes"><span>▤</span> Negociações</button>
+        <button class="nav-button" data-page="agenda"><span>◷</span> <em class="nav-texto">Agenda</em><b id="navAgendaBadge" class="nav-badge" hidden>0</b></button>
+        <button class="nav-button" data-page="indicadores"><span>▥</span> Indicadores</button>
+        <button class="nav-button" data-page="clientes"><span>☺</span> <em class="nav-texto">Clientes</em><b id="navClientesBadge" class="nav-badge" hidden>0</b></button>
+        <button class="nav-button" data-page="construcoes"><span>⌂</span> Imóveis</button>
+        <button class="nav-button" id="navCadastros" data-page="cadastros"><span>✚</span> <em id="navCadastrosTexto" class="nav-texto">Cadastros</em><b id="navCadastrosBadge" class="nav-badge" hidden>0</b></button>
+        <button class="nav-button" id="navInteresses" data-page="interesses"><span>☎</span> Interesses</button>
+        <button class="nav-button" id="navCorretores" data-page="corretores"><span>◔</span> Equipe</button>
+        <button class="nav-button" id="navComissoes" data-page="comissoes"><span>%</span> Comissões</button>
+        <button class="nav-button" id="navFinanceiro" data-page="financeiro" hidden><span>$</span> <em class="nav-texto">Financeiro</em><b id="navFinanceiroBadge" class="nav-badge" hidden>0</b></button>
+        <button class="nav-button" data-page="settings"><span>⚙</span> Configurações</button>
+      </nav>
+      <div class="sidebar-user"><span id="currentUserAvatar" class="sidebar-avatar"></span><strong id="currentUserName">Usuário</strong><span id="currentUserRole">—</span><button id="logoutButton">Sair</button></div>
+    </aside>
+
+    <main class="workspace">
+      <header class="topbar">
+        <div><span class="eyebrow">CERRADO IMOBILIÁRIA</span><h1 id="pageTitle">Visão geral</h1></div>
+        <div class="connection-area">
+          <button id="modoCorretorButton" type="button" class="secondary-button" hidden>📱 Modo corretor</button>
+          <button id="topbarSwitchCarteiraButton" type="button" class="secondary-button">Trocar carteira</button>
+          <span id="syncTime">Ainda não sincronizado</span><span id="connectionBadge" class="connection-badge offline">Desconectado</span>
+        </div>
+      </header>
+
+      <nav id="corretorTabs" class="corretor-tabs" aria-label="Menu" hidden>
+        <button type="button" data-ct-page="hoje"><span class="ct-ico">☀</span><em>Hoje</em><b id="ctBadgeHoje" class="ct-badge" hidden>0</b></button>
+        <button type="button" data-ct-page="construcoes"><span class="ct-ico">⌂</span><em>Imóveis</em></button>
+        <button type="button" data-ct-page="clientes"><span class="ct-ico">☺</span><em>Clientes</em></button>
+        <button type="button" data-ct-page="negociacoes"><span class="ct-ico">▤</span><em>Negócios</em></button>
+        <button type="button" data-ct-page="conta"><span class="ct-ico">◉</span><em>Conta</em><b id="ctBadgeConta" class="ct-badge" hidden>0</b></button>
+      </nav>
+
+      <section id="page-hoje" class="page">
+        <div class="hoje-topo">
+          <span id="hojeAvatar" class="hoje-avatar"></span>
+          <div><h2 id="hojeSaudacao">Olá</h2><p id="hojeData">—</p></div>
+        </div>
+        <p id="hojeAvisoCentral" class="hoje-aviso-central" hidden>Modo corretor com acesso de Central: você vê os clientes e negócios de toda a equipe.</p>
+        <div class="hoje-atalhos">
+          <button type="button" data-hoje-acao="cliente"><span>☺</span>Novo cliente</button>
+          <button type="button" data-hoje-acao="negocio"><span>▤</span>Novo negócio</button>
+          <button type="button" data-hoje-acao="compromisso"><span>◷</span>Agendar</button>
+          <button type="button" data-hoje-acao="imovel"><span>⌂</span>Cadastrar imóvel</button>
+        </div>
+        <div id="hojeCadastros" class="hoje-avisos" hidden></div>
+        <section class="hoje-bloco">
+          <header><h3>Para fazer hoje</h3><span id="hojeAgendaContagem"></span><button type="button" class="text-button" data-go="agenda">Agenda completa</button></header>
+          <div id="hojeAgenda" class="hoje-agenda"></div>
+        </section>
+        <section class="hoje-bloco">
+          <header><h3>Meus números</h3></header>
+          <div id="hojeNumeros" class="hoje-numeros"></div>
+        </section>
+        <section id="hojeNovidadesBloco" class="hoje-bloco" hidden>
+          <header><h3>Imóveis mais recentes</h3><button type="button" class="text-button" data-go="construcoes">Ver todos</button></header>
+          <div id="hojeNovidades" class="hoje-novidades"></div>
+        </section>
+      </section>
+
+      <section id="page-conta" class="page">
+        <div class="conta-topo">
+          <span id="contaAvatar"></span>
+          <div><h2 id="contaNome">—</h2><p id="contaPapel">—</p></div>
+        </div>
+        <div class="conta-menu">
+          <button type="button" data-go="cadastros"><span>✚</span><em id="contaCadastrosTexto">Meus cadastros de imóveis</em><b id="contaCadastrosBadge" class="ct-badge" hidden>0</b><i>›</i></button>
+          <button type="button" data-go="agenda"><span>◷</span><em>Agenda completa</em><i>›</i></button>
+          <button type="button" data-go="comissoes"><span>%</span><em>Minhas comissões</em><i>›</i></button>
+          <button type="button" id="contaPerfilAtuacao"><span>★</span><em>Meu perfil de atuação</em><span id="contaPerfilChips" class="conta-perfil-chips"></span><i>›</i></button>
+          <button type="button" data-go="indicadores"><span>▥</span><em>Indicadores</em><i>›</i></button>
+          <button type="button" data-go="settings"><span>⚙</span><em>Foto, senha e configurações</em><i>›</i></button>
+          <button type="button" id="contaTrocarCarteira"><span>⇄</span><em>Trocar carteira</em><i>›</i></button>
+          <button type="button" id="contaVoltarCentral" hidden><span>↩</span><em>Voltar para a tela da Central</em><i>›</i></button>
+          <button type="button" id="contaSair" class="conta-sair"><span>⏻</span><em>Sair</em></button>
+        </div>
+        <p id="contaVersao" class="conta-versao">—</p>
+      </section>
+
+      <section id="page-dashboard" class="page active-page">
+        <div class="metric-grid">
+          <button class="metric-card status-disponivel" data-status="disponivel"><span>Disponíveis</span><strong id="metricDisponivel">0</strong></button>
+          <button class="metric-card status-reservado" data-status="reservado"><span>Reservados (aluguel)</span><strong id="metricReservado">0</strong></button>
+          <button class="metric-card status-em_negociacao" data-status="em_negociacao"><span>Em negociação (venda)</span><strong id="metricEmNegociacao">0</strong></button>
+          <button class="metric-card status-alugado" data-status="alugado" data-so-central><span>Alugados</span><strong id="metricAlugado">0</strong></button>
+          <button class="metric-card status-vendido" data-status="vendido" data-so-central><span>Vendidos</span><strong id="metricVendido">0</strong></button>
+          <button class="metric-card status-indisponivel" data-status="indisponivel" data-so-central><span>Indisponíveis</span><strong id="metricIndisponivel">0</strong></button>
+        </div>
+        <div class="dashboard-grid">
+          <article class="panel"><div class="panel-heading"><div><span class="eyebrow">CARTEIRA</span><h2 id="dashboardCarteiraNome">—</h2></div><button class="text-button" data-go="construcoes">Ver imóveis</button></div><div id="dashboardRecentes" class="compact-list"></div></article>
+        </div>
+      </section>
+
+      <section id="page-construcoes" class="page">
+        <div class="busca-painel">
+          <div class="busca-linha">
+            <div id="finalidadeFiltro" class="segmentado" role="group" aria-label="Finalidade">
+              <button type="button" data-finalidade="aluguel">Aluguel</button>
+              <button type="button" data-finalidade="venda">Venda</button>
+              <button type="button" data-finalidade="todos" class="ativo">Todos</button>
+            </div>
+            <div id="zonaFiltro" class="segmentado zona-filtro" role="group" aria-label="Urbanos ou rurais">
+              <button type="button" data-zona="urbano" class="ativo">🏙️ Urbanos</button>
+              <button type="button" data-zona="rural">🌾 Rurais<span id="zonaRuralQtd" class="zona-qtd"></span></button>
+            </div>
+            <input id="construcaoSearchInput" type="search" placeholder="Nome, código, endereço ou edifício" />
+            <select id="construcaoStatusFilter"></select>
+          </div>
+          <div class="busca-linha">
+            <div class="bairro-filtro">
+              <input id="bairroFiltroInput" list="bairrosLista" placeholder="Bairro (até 3)" autocomplete="off" />
+              <div id="bairroChips" class="bairro-chips"></div>
+            </div>
+            <div id="faixaValorBox" class="faixa-valor" hidden>
+              <div class="faixa-valor-topo"><span id="faixaValorRotulo">Valor</span><strong id="faixaValorTexto">—</strong></div>
+              <div class="faixa-valor-trilho">
+                <div id="faixaValorPreenchido" class="faixa-valor-preenchido"></div>
+                <input id="valorMinRange" type="range" aria-label="Valor mínimo" />
+                <input id="valorMaxRange" type="range" aria-label="Valor máximo" />
+              </div>
+            </div>
+            <p id="faixaValorDica" class="muted-text faixa-dica">Escolha Aluguel ou Venda para filtrar por faixa de valor.</p>
+          </div>
+          <div class="busca-linha busca-acoes">
+            <span id="buscaResultado" class="muted-text">—</span>
+            <button id="limparFiltrosButton" type="button" class="text-button">Limpar filtros</button>
+            <button id="toggleConstrucaoViewButton" class="secondary-button">Alternar mapa/lista</button>
+            <button id="newConstrucaoButton" class="primary-button">Novo imóvel</button>
+          </div>
+        </div>
+        <datalist id="bairrosLista"></datalist>
+        <div id="construcaoMapPanel" class="map-panel" hidden><div id="construcaoMap"></div><div id="mapLegend" class="map-legend"></div></div>
+        <div id="construcaoGrid" class="construcao-grid"></div>
+        <div id="construcaoGridEmpty" class="empty-state" hidden>Nenhum imóvel encontrado com esses filtros.</div>
+      </section>
+
+      <section id="page-negociacoes" class="page">
+        <div class="crm-toolbar">
+          <div id="crmFunilTabs" class="segmentado"></div>
+          <input id="crmBuscaNeg" type="search" placeholder="Buscar cliente, imóvel ou telefone" autocomplete="off" />
+          <select id="crmCorretorFiltro" data-so-central><option value="">Todos os corretores</option></select>
+          <button id="crmNovaNegButton" type="button" class="primary-button">+ Nova negociação</button>
+        </div>
+        <div id="crmResumoFunil" class="crm-resumo"></div>
+        <p class="muted-text crm-dica">Arraste o cartão para mudar de etapa, ou toque nele para abrir. Fechado e Perdido mostram os últimos 30 dias.</p>
+        <div id="crmQuadro" class="crm-quadro"></div>
+      </section>
+
+      <section id="page-agenda" class="page">
+        <div class="crm-toolbar"><p class="muted-text" style="margin:0;flex:1 1 300px">Próximas ações das negociações em aberto. Registre o atendimento e já agende o próximo passo.</p><button id="crmNovoCompromisso" type="button" class="primary-button">+ Novo compromisso</button></div>
+        <div id="crmAgenda" class="crm-agenda"></div>
+      </section>
+
+      <section id="page-indicadores" class="page">
+        <div class="crm-toolbar painel-filtros">
+          <select id="painelPeriodo">
+            <option value="mes">Este mês</option>
+            <option value="30">Últimos 30 dias</option>
+            <option value="90" selected>Últimos 90 dias</option>
+            <option value="ano">Este ano</option>
+            <option value="tudo">Todo o período</option>
+          </select>
+          <select id="painelFunil"><option value="">Venda e locação</option><option value="venda">Só venda</option><option value="locacao">Só locação</option></select>
+          <select id="painelCorretor"></select>
+          <select id="painelPadrao"><option value="">Todos os padrões</option><option value="economico">Econômico</option><option value="medio">Médio padrão</option><option value="alto">Alto padrão</option></select>
+          <span id="painelAtualizado" class="crm-contagem"></span>
+          <button id="painelExportar" type="button" class="secondary-button">Excel (CSV)</button>
+          <button id="painelImprimir" type="button" class="primary-button">Imprimir / PDF</button>
+        </div>
+        <div id="painelKpis" class="crm-resumo painel-kpis"></div>
+        <div id="painelFunis" class="painel-grade"></div>
+        <div class="painel-grade">
+          <article class="panel painel-bloco"><h3>Origem dos contatos</h3><div id="painelOrigem"></div></article>
+          <article class="panel painel-bloco"><h3>Motivos de perda</h3><div id="painelPerdas"></div></article>
+        </div>
+        <article class="panel painel-bloco"><h3>Equipe</h3><div id="painelEquipe"></div></article>
+        <article class="panel painel-bloco">
+          <h3>Estoque de imóveis</h3>
+          <div id="painelEstoqueNumeros" class="crm-resumo painel-kpis"></div>
+          <div class="painel-duas">
+            <div><h4>Disponíveis por tipo</h4><div id="painelEstoqueTipo"></div></div>
+            <div><h4>Disponíveis por bairro</h4><div id="painelEstoqueBairro"></div></div>
+          </div>
+          <div class="painel-duas">
+            <div><h4>Disponíveis sem nenhuma negociação</h4><ul id="painelSemNegociacao" class="painel-lista"></ul></div>
+            <div><h4>Exclusividades vencendo</h4><ul id="painelExclusividades" class="painel-lista"></ul></div>
+          </div>
+        </article>
+        <article class="panel painel-bloco"><h3>Indicações</h3><div id="painelIndicacoes"></div></article>
+        <div class="painel-grade">
+          <article class="panel painel-bloco"><h3>Demanda sem estoque</h3><div id="painelDemanda"></div></article>
+          <article class="panel painel-bloco"><h3>Padrão dos clientes em negociação</h3><div id="painelPadraoBloco" class="crm-resumo painel-padroes"></div></article>
+        </div>
+      </section>
+
+      <section id="page-clientes" class="page">
+        <div class="crm-toolbar">
+          <input id="crmBuscaCli" type="search" placeholder="Buscar por nome, celular, e-mail ou CPF" autocomplete="off" />
+          <select id="crmTipoCliFiltro">
+            <option value="">Todos os tipos</option>
+            <option value="comprador">Compradores</option>
+            <option value="inquilino">Inquilinos</option>
+            <option value="vendedor">Vendedores</option>
+            <option value="investidor">Investidores</option>
+            <option value="proprietario">Proprietários</option>
+            <option value="pendente">Aguardando aprovação</option>
+          </select>
+          <select id="crmPerfilCliFiltro" aria-label="Perfil do cliente">
+            <option value="">Todos os perfis</option>
+            <option value="economico">Econômico</option>
+            <option value="medio">Médio padrão</option>
+            <option value="alto">Alto padrão</option>
+            <option value="rural">Rural</option>
+            <option value="locacao">Aluguéis</option>
+            <option value="venda">Vendas</option>
+          </select>
+          <select id="crmCorretorCliFiltro" data-so-central><option value="">Todos os corretores</option><option value="__sem">Sem corretor</option></select>
+          <span id="crmCliContagem" class="crm-contagem"></span>
+          <button id="crmDistribuirRoleta" type="button" class="secondary-button" hidden>🎲 Distribuir pela roleta</button>
+          <button id="crmNovoCliButton" type="button" class="primary-button">+ Novo cliente</button>
+        </div>
+        <div class="panel table-panel">
+          <table class="crm-tabela"><thead><tr><th>Cliente</th><th>Contato</th><th>Tipo</th><th class="crm-col-central">Corretor</th><th>Negociações</th><th>Cadastro</th></tr></thead><tbody id="crmClientesBody"></tbody></table>
+          <div id="crmClientesVazio" class="empty-state" hidden>Nenhum cliente encontrado.</div>
+        </div>
+      </section>
+
+      <section id="page-cadastros" class="page">
+        <div class="page-actions">
+          <p id="cadastrosIntro">—</p>
+          <div class="cadastros-acoes">
+            <select id="cadastrosFiltro" hidden>
+              <option value="pendente">Aguardando aprovação</option>
+              <option value="recusado">Recusados</option>
+              <option value="aprovado">Aprovados (enviados por corretores)</option>
+            </select>
+            <button id="novoCadastroButton" type="button" class="primary-button" hidden>Cadastrar imóvel</button>
+          </div>
+        </div>
+        <div id="cadastrosLista" class="cadastros-lista"></div>
+        <div id="cadastrosVazio" class="empty-state" hidden>—</div>
+      </section>
+
+      <section id="page-interesses" class="page">
+        <p class="muted-text" style="margin:0 0 14px">Interesses de aluguel e de compra registrados pelos corretores, com a ficha de contato do cliente.</p>
+        <div class="panel table-panel">
+          <table><thead><tr><th>Imóvel</th><th>Tipo</th><th>Cliente</th><th>Telefone</th><th>CPF</th><th>E-mail</th><th>Observação</th><th>Data</th><th>Situação</th><th>Ações</th></tr></thead><tbody id="interessesTableBody"></tbody></table>
+          <div id="interessesTableEmpty" class="empty-state" hidden>Nenhum interesse registrado ainda.</div>
+        </div>
+      </section>
+
+      <section id="page-corretores" class="page">
+        <div class="page-actions">
+          <p>Corretores e pessoas do escritório: crie convites ou acessos diretos. Se a pessoa já tiver um acesso com o mesmo e-mail (em outra carteira, por exemplo), ela só ganha acesso a esta também — continua entrando com a senha que já usa.</p>
+          <div style="display:flex;gap:10px">
+            <button id="newInviteAluguelButton" class="primary-button">Novo convite</button>
+            <button id="newDirectUserAluguelButton" class="secondary-button">Criar acesso direto (com prazo)</button>
+          </div>
+        </div>
+        <div class="panel table-panel">
+          <table><thead><tr><th>Nome</th><th>E-mail</th><th>Acesso</th><th>Regra de comissão</th><th>Situação</th><th>Ações</th></tr></thead><tbody id="corretorTableBody"></tbody></table>
+        </div>
+        <article class="panel">
+          <div class="panel-heading"><h2>Convites aguardando ativação</h2></div>
+          <div id="inviteAluguelList" class="invite-list"></div>
+        </article>
+      </section>
+
+      <section id="page-comissoes" class="page">
+        <div class="crm-toolbar">
+          <select id="comFiltroSituacao">
+            <option value="">Todas as situações</option>
+            <option value="apagar">A pagar</option>
+            <option value="previstas">Previstas (meses futuros)</option>
+            <option value="pagas">Pagas</option>
+            <option value="canceladas">Canceladas</option>
+          </select>
+          <select id="comFiltroPessoa"></select>
+          <select id="comFiltroMes"></select>
+          <span id="comContagem" class="crm-contagem"></span>
+          <button id="newComissaoAluguelButton" class="secondary-button">+ Lançamento manual</button>
+        </div>
+        <div id="comResumo" class="crm-resumo com-resumo"></div>
+        <p class="muted-text crm-dica">As comissões são lançadas sozinhas quando a negociação vai para "Fechado" e, nas partes sobre a taxa de administração, a cada aluguel recebido no Financeiro — sempre pela regra do corretor (ou a padrão da casa). Monte as regras em Configurações → Regras de comissão.</p>
+        <div class="panel table-panel">
+          <table class="crm-tabela com-tabela"><thead><tr><th>Quem recebe</th><th>Negócio</th><th>Parte</th><th>Base</th><th>Comissão</th><th>Mês</th><th>Situação</th><th></th></tr></thead><tbody id="comissaoAluguelTableBody"></tbody></table>
+          <div id="comissaoAluguelTableEmpty" class="empty-state" hidden>Nenhuma comissão nesta seleção.</div>
+        </div>
+      </section>
+
+      <section id="page-financeiro" class="page">
+        <div class="fin-abas" role="tablist">
+          <button type="button" class="fin-aba ativa" data-fin-aba="resumo">Resumo</button>
+          <button type="button" class="fin-aba" data-fin-aba="cobrancas">Cobranças <b id="finAtrasoBadge" class="nav-badge" hidden>0</b></button>
+          <button type="button" class="fin-aba" data-fin-aba="contratos">Contratos</button>
+          <button type="button" class="fin-aba" data-fin-aba="repasses">Repasses</button>
+          <button type="button" class="fin-aba" data-fin-aba="regua">Régua de cobrança <b id="finReguaBadge" class="nav-badge" hidden>0</b></button>
+          <button type="button" class="fin-aba" data-fin-aba="encargos">Encargos <b id="finEncBadge" class="nav-badge" hidden>0</b></button>
+          <button type="button" class="fin-aba" data-fin-aba="chamados">Manutenção <b id="finChBadge" class="nav-badge" hidden>0</b></button>
+        </div>
+        <div class="crm-toolbar fin-toolbar">
+          <input id="finMes" type="month" title="Mês" />
+          <select id="finFiltro" hidden></select>
+          <input id="finBusca" type="search" placeholder="Buscar inquilino, proprietário, imóvel ou nº" autocomplete="off" hidden />
+          <span id="finContagem" class="crm-contagem"></span>
+          <button id="finAtualizar" type="button" class="secondary-button">Atualizar</button>
+          <button id="finNovoContrato" type="button" class="primary-button" data-fin-gerir>+ Novo contrato</button>
+        </div>
+        <div id="finResumo"></div>
+        <div id="finLista" class="panel table-panel" hidden></div>
+        <div id="finExtra" hidden></div>
+      </section>
+
+      <section id="page-settings" class="page">
+        <div class="settings-grid">
+          <div class="panel form-panel"><span class="eyebrow">PERFIL</span><h2>Minha foto</h2><div id="minhaFotoPainel"></div></div>
+          <form id="passwordForm" class="panel form-panel"><span class="eyebrow">SEGURANÇA</span><h2>Alterar minha senha</h2><label><span>Nova senha</span><input id="changedPasswordInput" type="password" required minlength="6" /></label><button class="primary-button">Alterar senha</button></form>
+          <div class="panel form-panel"><span class="eyebrow">CARTEIRA</span><h2 id="settingsCarteiraNome">—</h2><button id="switchCarteiraButton" type="button" class="secondary-button full-width">Trocar carteira</button></div>
+          <div id="settingsCadastroPanel" class="panel form-panel" hidden>
+            <span class="eyebrow">CADASTRO PELOS CORRETORES</span>
+            <h2>Nota mínima para envio</h2>
+            <p>Quando ativada, o corretor só consegue enviar um imóvel para aprovação se o cadastro atingir a quantidade de estrelas escolhida. Cada estrela vale 20% do cadastro completo.</p>
+            <label><span>Exigir no mínimo</span>
+              <select id="notaMinimaSelect">
+                <option value="">Desativado (sem exigência)</option>
+                <option value="1">★ 1 estrela (20%)</option>
+                <option value="2">★★ 2 estrelas (40%)</option>
+                <option value="3">★★★ 3 estrelas (60%)</option>
+                <option value="4">★★★★ 4 estrelas (80%)</option>
+                <option value="5">★★★★★ 5 estrelas (100%)</option>
+              </select>
+            </label>
+            <button id="salvarNotaMinimaButton" type="button" class="primary-button">Salvar</button>
+          </div>
+          <div id="crmConfigPanel" class="panel form-panel crm-config" data-so-config>
+            <span class="eyebrow">CRM — FUNIS</span>
+            <h2>Etapas das negociações</h2>
+            <p>Renomeie, reordene ou crie etapas. "Fechado" e "Perdido" ficam sempre no fim. Para remover uma etapa, ela precisa estar vazia.</p>
+            <select id="crmConfigFunil"></select>
+            <div id="crmConfigEtapas" class="crm-config-lista"></div>
+            <div class="crm-config-acoes"><button id="crmAddEtapa" type="button" class="secondary-button">+ Etapa</button><button id="crmSalvarEtapas" type="button" class="primary-button">Salvar etapas</button></div>
+          </div>
+          <div id="crmMotivosPanel" class="panel form-panel crm-config" data-so-config>
+            <span class="eyebrow">CRM — PERDAS</span>
+            <h2>Motivos de perda</h2>
+            <p>Lista que o corretor escolhe ao marcar uma negociação como perdida. Motivo já usado é desativado, não apagado.</p>
+            <div id="crmConfigMotivos" class="crm-config-lista"></div>
+            <div class="crm-config-acoes"><button id="crmAddMotivo" type="button" class="secondary-button">+ Motivo</button><button id="crmSalvarMotivos" type="button" class="primary-button">Salvar motivos</button></div>
+          </div>
+          <div id="crmFaixasPanel" class="panel form-panel crm-config" data-so-config>
+            <span class="eyebrow">CRM — PADRÃO DO CLIENTE</span>
+            <h2>Faixas de padrão</h2>
+            <p>Define quando um cliente é econômico, médio ou alto padrão pelo valor que ele procura. Aparece como selo no quadro de negociações e como filtro nos indicadores.</p>
+            <div class="form-row">
+              <label><span>Venda: médio a partir de</span><input id="crmFaixaVendaMedio" inputmode="decimal" /></label>
+              <label><span>Venda: alto padrão a partir de</span><input id="crmFaixaVendaAlto" inputmode="decimal" /></label>
+            </div>
+            <div class="form-row">
+              <label><span>Locação: médio a partir de</span><input id="crmFaixaLocacaoMedio" inputmode="decimal" /></label>
+              <label><span>Locação: alto padrão a partir de</span><input id="crmFaixaLocacaoAlto" inputmode="decimal" /></label>
+            </div>
+            <div id="crmFaixasPrevia" class="crm-faixas-previa"></div>
+            <button id="crmSalvarFaixas" type="button" class="primary-button">Salvar faixas</button>
+          </div>
+          <div id="comRegrasPanel" class="panel form-panel com-regras-panel" data-comissao hidden>
+            <span class="eyebrow">COMISSÕES</span>
+            <h2>Regras de comissão</h2>
+            <p>Monte do jeito que a imobiliária paga: 1º aluguel, % do aluguel todo mês, % da venda, captação, parceria, bônus fixo e metas do mês. A regra "padrão da casa" vale para todos; em Equipe dá para dar uma regra diferente a alguém. Ao fechar um negócio, as comissões são lançadas sozinhas.</p>
+            <div id="comRegrasLista" class="com-regras-lista"></div>
+            <div class="crm-config-acoes"><button id="comNovaRegra" type="button" class="primary-button">+ Nova regra</button></div>
+          </div>
+          <div id="crmRoletaPanel" class="panel form-panel crm-config" data-gestao hidden>
+            <span class="eyebrow">CRM — DISTRIBUIÇÃO DE CONTATOS</span>
+            <h2>Roleta de leads</h2>
+            <p>Com a roleta ligada, cada cliente novo sem corretor vai para o próximo da fila, um de cada vez. Desmarque quem estiver de folga ou de férias.</p>
+            <label class="check-inline"><input id="crmRoletaAtiva" type="checkbox" /> Roleta ligada</label>
+            <div id="crmRoletaLista" class="crm-config-lista crm-roleta-lista"></div>
+            <p id="crmRoletaProximo" class="muted-text"></p>
+            <button id="crmSalvarRoleta" type="button" class="primary-button">Salvar roleta</button>
+          </div>
+          <div class="panel form-panel"><span class="eyebrow">SOBRE</span><h2>Versão instalada</h2><p id="appVersionText">—</p></div>
+        </div>
+      </section>
+    </main>
+  </section>
+
+  <dialog id="construcaoDialog">
+    <form method="dialog" class="dialog-card construcao-dialog-card">
+      <button class="dialog-close" type="button" value="cancel">×</button>
+
+      <div id="imovelHero" class="imovel-hero">
+        <img id="imovelHeroImg" src="" alt="Foto do imóvel" hidden />
+        <div id="imovelHeroEmpty" class="imovel-hero-empty">Sem fotos ainda</div>
+        <button id="heroPrevButton" class="hero-nav hero-nav-prev" type="button" aria-label="Foto anterior" hidden>‹</button>
+        <button id="heroNextButton" class="hero-nav hero-nav-next" type="button" aria-label="Próxima foto" hidden>›</button>
+        <span id="imovelHeroContador" class="imovel-hero-contador" hidden>1/1</span>
+        <span id="imovelHeroStatus" class="status-pill imovel-hero-status">—</span>
+      </div>
+      <div class="imovel-hero-toolbar">
+        <div id="construcaoFotosGrid" class="fotos-strip"></div>
+        <label class="secondary-button foto-add-button">+ Fotos<input id="construcaoFotosInput" type="file" accept="image/*" multiple hidden /></label><label class="secondary-button foto-add-button foto-camera-button">📷 Câmera<input id="construcaoCameraInput" type="file" accept="image/*" capture="environment" hidden /></label>
+      </div>
+
+      <span id="construcaoDialogEyebrow" class="eyebrow">IMÓVEL</span>
+      <h2 id="construcaoDialogTitle">Novo imóvel</h2>
+      <div id="aprovacaoBanner" class="aprovacao-banner" hidden></div>
+      <div id="autoriaInfo" class="autoria-info" hidden></div>
+      <div id="qualidadeBox" class="qualidade-box" hidden>
+        <div class="qualidade-topo"><span class="eyebrow">QUALIDADE DO CADASTRO</span><strong id="qualidadeEstrelas">☆☆☆☆☆</strong><span id="qualidadePct">0%</span></div>
+        <div class="qualidade-barra"><div id="qualidadeBarra"></div></div>
+        <p id="qualidadeFalta" class="muted-text"></p>
+      </div>
+
+      <div id="fichaLeitura" class="ficha-leitura" hidden>
+        <div id="fichaPrecos" class="imovel-precos"></div>
+        <div id="fichaSpecs" class="unit-specs-card"></div>
+        <div id="fichaPerimetro" class="ficha-perimetro" hidden></div>
+        <p id="fichaEndereco" class="ficha-endereco"></p>
+        <p id="fichaDescricao" class="ficha-descricao"></p>
+      </div>
+
+      <div id="formEdicao" class="form-edicao">
+        <div class="finalidade-row zona-row">
+          <span class="campo-rotulo">Tipo de área</span>
+          <div id="zonaImovel" class="segmentado" role="group" aria-label="Urbano ou rural">
+            <button type="button" data-zona="urbano" class="ativo">🏙️ Urbano</button>
+            <button type="button" data-zona="rural">🌾 Rural</button>
+          </div>
+        </div>
+        <label><span>Nome do anúncio</span><input id="construcaoNomeInput" placeholder="ex.: Casa 3 quartos no Vila Aurora" required /></label>
+        <div class="finalidade-row">
+          <span class="campo-rotulo">Finalidade</span>
+          <label class="check-inline"><input id="finalidadeAluguelInput" type="checkbox" /> Aluguel</label>
+          <label class="check-inline"><input id="finalidadeVendaInput" type="checkbox" /> Venda</label>
+        </div>
+        <div class="form-row">
+          <label><span>Tipo de imóvel</span>
+            <select id="construcaoTipoInput">
+              <option value="Casa">Casa</option>
+              <option value="Casa de condomínio">Casa de condomínio</option>
+              <option value="Sobrado">Sobrado</option>
+              <option value="Apartamento">Apartamento</option>
+              <option value="Cobertura">Cobertura</option>
+              <option value="Kitnet/Studio">Kitnet/Studio</option>
+              <option value="Sala comercial">Sala comercial</option>
+              <option value="Ponto comercial">Ponto comercial</option>
+              <option value="Galpão">Galpão</option>
+              <option value="Terreno">Terreno</option>
+              <option value="Chácara/Sítio">Chácara/Sítio</option>
+              <option value="Outro">Outro</option>
+            </select>
+          </label>
+          <label><span>Situação</span><select id="construcaoStatusInput"></select></label>
+        </div>
+        <label id="loteLabel" class="check-inline lote-check"><input id="loteInput" type="checkbox" /> 🏷️ Lote / terreno sem construção <small>— na nota de qualidade basta 1 foto</small></label>
+        <div class="form-row">
+          <label id="valorAluguelLabel"><span>Valor do aluguel (por mês)</span><input id="construcaoValorInput" inputmode="decimal" placeholder="R$ 0,00" /></label>
+          <label id="valorVendaLabel"><span>Valor de venda</span><input id="construcaoValorVendaInput" inputmode="decimal" placeholder="R$ 0,00" /></label>
+        </div>
+        <div class="form-row">
+          <label id="codigoLabel"><span>Código do imóvel</span><input id="construcaoCodigoInput" placeholder="Gerado automaticamente" /></label>
+          <label id="edificioLabel"><span>Edifício ou condomínio (se houver)</span><input id="construcaoEdificioInput" /></label>
+        </div>
+        <div id="custoRow" class="form-row">
+          <div class="custo-campo">
+            <label><span>Condomínio</span>
+              <select id="condominioTipoInput"><option value="">Não informado</option><option value="valor">Valor mensal</option><option value="incluso">Incluso no valor</option><option value="nao_tem">Não tem</option></select>
+            </label>
+            <input id="condominioValorInput" inputmode="decimal" placeholder="R$ por mês" hidden />
+          </div>
+          <div class="custo-campo">
+            <label><span>IPTU</span>
+              <select id="iptuTipoInput"><option value="">Não informado</option><option value="valor">Valor anual</option><option value="incluso">Incluso no valor</option><option value="nao_tem">Não tem</option></select>
+            </label>
+            <input id="iptuValorInput" inputmode="decimal" placeholder="R$ por ano" hidden />
+          </div>
+        </div>
+        <div>
+          <span class="campo-rotulo">Características</span>
+          <div class="caracteristicas-grid">
+            <label data-car="area" class="area-campo"><span id="areaRotulo">Área</span><span class="area-com-unidade"><input id="areaInput" type="number" min="0" step="any" inputmode="decimal" /><select id="areaUnidadeInput" aria-label="Unidade da área"></select></span><small id="areaConversao" class="area-conversao"></small></label>
+            <label data-car="salas"><span>Salas</span><input id="salasInput" type="number" min="0" step="1" inputmode="numeric" /></label>
+            <label data-car="quartos"><span>Quartos</span><input id="quartosInput" type="number" min="0" step="1" inputmode="numeric" /></label>
+            <label data-car="suites"><span>Suítes</span><input id="suitesInput" type="number" min="0" step="1" inputmode="numeric" /></label>
+            <label data-car="banheiros"><span>Banheiros</span><input id="banheirosInput" type="number" min="0" step="1" inputmode="numeric" /></label>
+            <label data-car="vagas"><span>Vagas</span><input id="vagasInput" type="number" min="0" step="1" inputmode="numeric" /></label>
+          </div>
+        </div>
+        <div id="benfeitoriasBloco" class="benfeitorias-bloco" hidden>
+          <span class="campo-rotulo">Benfeitorias e estrutura</span>
+          <p class="muted-text">O que o imóvel tem: toque nas sugestões ou escreva e adicione. O detalhe é opcional (tamanho, capacidade, quantidade).</p>
+          <div id="benfeitoriasLista" class="benfeitorias-lista"></div>
+          <div class="benfeitorias-add">
+            <input id="benfeitoriaNomeInput" list="benfeitoriasSugestoes" placeholder="Ex.: Barracão" autocomplete="off" />
+            <input id="benfeitoriaDetalheInput" placeholder="Detalhe: 600 m², 500 t, 2 unidades..." autocomplete="off" />
+            <button id="benfeitoriaAddButton" type="button" class="secondary-button">+ Adicionar</button>
+          </div>
+          <div id="benfeitoriasRapidas" class="benfeitorias-rapidas"></div>
+          <datalist id="benfeitoriasSugestoes"></datalist>
+        </div>
+        <div id="perimetroBloco" class="perimetro-bloco" hidden>
+          <span class="campo-rotulo">Perímetro da área (KML / KMZ)</span>
+          <p id="perimetroInfo" class="muted-text">Carregue o arquivo do perímetro (Google Earth, CAR, SIGEF ou do topógrafo). A área aparece no mapa do imóvel.</p>
+          <div class="perimetro-acoes">
+            <label class="secondary-button">📍 Carregar KML/KMZ<input id="perimetroInput" type="file" accept=".kml,.kmz,application/vnd.google-earth.kml+xml,application/vnd.google-earth.kmz" hidden /></label>
+            <button id="perimetroUsarArea" type="button" class="secondary-button" hidden>Usar a área do arquivo</button>
+            <button id="perimetroBaixar" type="button" class="secondary-button" hidden>Baixar KML</button>
+            <button id="perimetroRemover" type="button" class="text-button" hidden>Remover</button>
+          </div>
+        </div>
+        <div>
+          <span class="campo-rotulo">Endereço</span>
+          <div class="endereco-grid">
+            <label id="cepLabel" class="c-3"><span>CEP</span><input id="cepInput" inputmode="numeric" placeholder="00000-000" /></label>
+            <label class="c-6 largo"><span id="logradouroRotulo">Rua / avenida</span><input id="logradouroInput" /></label>
+            <label class="c-3"><span id="numeroRotulo">Número</span><input id="numeroInput" /></label>
+            <label class="c-3"><span>Complemento</span><input id="complementoInput" placeholder="Apto, sala, bloco" /></label>
+            <label class="c-3"><span id="bairroRotulo">Bairro</span><input id="bairroInput" list="bairrosLista" autocomplete="off" /></label>
+            <label class="c-4"><span>Cidade</span><input id="cidadeInput" /></label>
+            <label class="c-2"><span>UF</span><input id="ufInput" maxlength="2" /></label>
+          </div>
+        </div>
+        <label><span>Descrição</span><textarea id="construcaoDescricaoInput" rows="4" placeholder="Detalhes do imóvel: cômodos, acabamentos, diferenciais, proximidades..."></textarea></label>
+        <div id="docsImovelBloco" class="docs-imovel-bloco">
+          <span class="campo-rotulo">Documentos do imóvel</span>
+          <p id="docsImovelDica" class="muted-text"></p>
+          <div id="docsImovelLista"></div>
+        </div>
+        <div id="opcoesCentralRow" class="finalidade-row">
+          <label class="check-inline"><input id="destaqueInput" type="checkbox" /> Destaque</label>
+          <label class="check-inline"><input id="publicarSiteInput" type="checkbox" /> Publicar no site</label>
+        </div>
+        <fieldset id="proprietarioBloco" class="proprietario-bloco" hidden>
+          <legend>Proprietário <small>— dados vistos só pela Central</small></legend>
+          <div id="proprietarioResumo" class="proprietario-resumo" hidden></div>
+          <label id="proprietarioEscolherLabel" hidden><span>Proprietário</span><select id="proprietarioSelect"></select></label>
+          <div id="proprietarioNovo" class="proprietario-novo">
+            <div class="form-row">
+              <label><span>Nome do proprietário</span><input id="propNomeInput" autocomplete="off" /></label>
+              <label><span>Celular / WhatsApp</span><input id="propTelefoneInput" inputmode="tel" placeholder="(66) 99999-9999" autocomplete="off" /></label>
+            </div>
+            <div class="form-row">
+              <label><span>E-mail</span><input id="propEmailInput" type="email" autocomplete="off" /></label>
+              <label><span>CPF</span><input id="propCpfInput" inputmode="numeric" placeholder="000.000.000-00" autocomplete="off" /></label>
+            </div>
+            <p id="propAvisoCorretor" class="muted-text" hidden>Depois de enviado, os dados do proprietário ficam só com a Central.</p>
+          </div>
+          <div class="form-row proprietario-exclusividade">
+            <label class="check-inline"><input id="exclusividadeInput" type="checkbox" /> Imóvel com exclusividade</label>
+            <label id="exclusividadeAteLabel" hidden><span>Exclusividade até</span><input id="exclusividadeAteInput" type="date" /></label>
+          </div>
+        </fieldset>
+      </div>
+
+      <details class="dialog-section coordenada-details">
+        <summary class="eyebrow">COORDENADA E MAPA ▾</summary>
+        <p class="muted-text" style="margin:8px 0 8px">Clique no mapa pra marcar a localização, ou cole abaixo um link do Google Maps do local.</p>
+        <label><span>Link do Google Maps (opcional)</span><input id="construcaoLinkMapaInput" placeholder="Cole aqui o link compartilhado do Google Maps" /></label>
+        <div id="construcaoLinkMapaMensagem" class="form-message" hidden style="margin:-4px 0 8px"></div>
+        <div id="construcaoPickerMap" class="picker-map"></div>
+        <div class="form-row" hidden>
+          <label><span>Latitude</span><input id="construcaoLatInput" type="number" step="0.000001" /></label>
+          <label><span>Longitude</span><input id="construcaoLngInput" type="number" step="0.000001" /></label>
+        </div>
+        <div class="mapa-links-row">
+          <a id="googleMapsButton" class="secondary-button" href="#" target="_blank" rel="noopener" hidden>Ir pelo Google Maps</a>
+          <a id="appleMapsButton" class="secondary-button" href="#" target="_blank" rel="noopener" hidden>Abrir no Apple Maps</a>
+        </div>
+      </details>
+
+      <div id="crmInteressados" class="crm-sublista crm-interessados" hidden></div>
+
+      <div class="dialog-actions">
+        <button id="deleteConstrucaoButton" type="button" class="danger-button" hidden>Excluir</button>
+        <button id="recusarCadastroButton" type="button" class="danger-button" hidden>Recusar</button>
+        <button id="registrarInteresseButton" type="button" class="primary-button" hidden>Registrar interesse</button>
+        <button id="saveConstrucaoButton" type="button" class="primary-button">Salvar imóvel</button>
+        <button id="enviarCadastroButton" type="button" class="primary-button" hidden>Enviar para aprovação</button>
+        <button id="aprovarCadastroButton" type="button" class="primary-button" hidden>Aprovar e publicar</button>
+      </div>
+      <div id="construcaoDialogMessage" class="form-message" hidden></div>
+    </form>
+  </dialog>
+
+  <dialog id="perfilAtuacaoDialog" class="crm-dialog">
+    <form method="dialog" class="dialog-card">
+      <button class="dialog-close" type="button" value="cancel">×</button>
+      <span class="eyebrow">PERFIL DE ATUAÇÃO</span>
+      <h2 id="perfilAtuacaoTitulo">Perfil do corretor</h2>
+      <p class="muted-text">Os imóveis que combinam com o perfil aparecem primeiro para o corretor (ele continua vendo todos), e a roleta entrega os contatos desse perfil para ele.</p>
+      <div id="perfilAtuacaoEditor"></div>
+      <p class="muted-text perfil-dica">Econômico, médio e alto padrão seguem as faixas de valor de Configurações.</p>
+      <div class="dialog-actions"><button id="perfilAtuacaoSalvar" type="button" class="primary-button">Salvar perfil</button></div>
+      <div id="perfilAtuacaoMsg" class="form-message" hidden></div>
+    </form>
+  </dialog>
+
+  <dialog id="crmClienteDialog" class="crm-dialog">
+    <form method="dialog" class="dialog-card">
+      <button class="dialog-close" type="button" value="cancel">×</button>
+      <span id="crmCliEyebrow" class="eyebrow">CLIENTE</span>
+      <h2 id="crmCliTitulo">Novo cliente</h2>
+      <div id="crmCliAprovacao" class="aprovacao-banner" hidden></div>
+      <div id="crmCliContato" class="crm-contato-rapido" hidden></div>
+      <label><span>Nome completo</span><input id="crmCliNome" autocomplete="off" /></label>
+      <div class="form-row">
+        <label><span>Celular / WhatsApp</span><input id="crmCliTelefone" inputmode="tel" placeholder="(66) 99999-9999" autocomplete="off" /></label>
+        <label><span>E-mail</span><input id="crmCliEmail" type="email" autocomplete="off" /></label>
+      </div>
+      <div class="form-row">
+        <label><span>CPF (opcional)</span><input id="crmCliCpf" inputmode="numeric" placeholder="000.000.000-00" autocomplete="off" /></label>
+        <label><span>Origem do contato</span><select id="crmCliOrigem"></select></label>
+      </div>
+      <label id="crmCliIndicadoLabel" hidden><span>Quem indicou (cliente da carteira)</span><select id="crmCliIndicado"></select></label>
+      <div class="crm-tipos">
+        <span class="crm-rotulo">Tipo de cliente</span>
+        <label class="check-inline"><input type="checkbox" value="comprador" data-crm-tipo /> Comprador</label>
+        <label class="check-inline"><input type="checkbox" value="inquilino" data-crm-tipo /> Inquilino</label>
+        <label class="check-inline"><input type="checkbox" value="vendedor" data-crm-tipo /> Vendedor</label>
+        <label class="check-inline" title="Compra imóveis para investir (renda de aluguel, valorização, revenda)"><input type="checkbox" value="investidor" data-crm-tipo /> Investidor</label>
+        <label class="check-inline"><input type="checkbox" value="proprietario" data-crm-tipo /> Proprietário</label>
+      </div>
+      <div class="crm-perfis-cliente">
+        <span class="crm-rotulo">Perfil do cliente <small>— a roleta entrega para o corretor do mesmo perfil</small></span>
+        <div id="crmCliPerfis"></div>
+      </div>
+      <div id="crmCliQualidade" class="qualidade-box cli-qualidade" hidden>
+        <div class="qualidade-topo"><span class="eyebrow">QUALIDADE DO CADASTRO</span><strong id="crmCliEstrelas">☆☆☆☆☆</strong><span id="crmCliPct">0%</span></div>
+        <div class="qualidade-barra"><div id="crmCliBarra"></div></div>
+        <p id="crmCliFalta" class="muted-text"></p>
+      </div>
+      <details id="crmCliFichaBox" class="crm-perfil crm-ficha">
+        <summary>Ficha do cliente <small>— opcional: melhora a nota e mostra se o imóvel cabe no orçamento</small></summary>
+        <div class="form-row">
+          <label><span>Renda mensal (familiar)</span><input id="crmFichaRenda" inputmode="decimal" placeholder="R$" autocomplete="off" /></label>
+          <label><span>Profissão</span><input id="crmFichaProfissao" autocomplete="off" /></label>
+        </div>
+        <div class="form-row">
+          <label><span>Estado civil</span><select id="crmFichaEstadoCivil"><option value="">—</option><option value="solteiro">Solteiro(a)</option><option value="casado">Casado(a)</option><option value="uniao_estavel">União estável</option><option value="divorciado">Divorciado(a)</option><option value="viuvo">Viúvo(a)</option></select></label>
+          <label><span>Quando quer fechar</span><select id="crmFichaPrazo"><option value="">—</option><option value="imediato">Imediato</option><option value="ate_3_meses">Até 3 meses</option><option value="ate_6_meses">Até 6 meses</option><option value="sem_pressa">Sem pressa</option></select></label>
+        </div>
+        <div class="crm-ficha-grupo" data-ficha-grupo="compra">
+          <span class="crm-rotulo">Compra</span>
+          <div class="form-row">
+            <label><span>Forma de pagamento</span><select id="crmFichaPagamento"><option value="">—</option><option value="a_vista">À vista</option><option value="financiamento">Financiamento bancário</option><option value="consorcio">Consórcio</option><option value="parcelado_direto">Parcelado direto</option><option value="permuta">Permuta</option></select></label>
+            <label><span>Entrada / recursos próprios</span><input id="crmFichaEntrada" inputmode="decimal" placeholder="R$" autocomplete="off" /></label>
+          </div>
+          <div class="form-row">
+            <label><span>Crédito aprovado (banco/consórcio)</span><input id="crmFichaCredito" inputmode="decimal" placeholder="R$" autocomplete="off" /></label>
+            <label class="check-inline crm-ficha-check"><input id="crmFichaFgts" type="checkbox" /> Vai usar FGTS</label>
+          </div>
+        </div>
+        <div class="crm-ficha-grupo" data-ficha-grupo="locacao">
+          <span class="crm-rotulo">Locação</span>
+          <div class="form-row">
+            <label><span>Garantia</span><select id="crmFichaGarantia"><option value="">—</option><option value="fiador">Fiador</option><option value="caucao">Caução</option><option value="seguro_fianca">Seguro-fiança</option><option value="titulo_capitalizacao">Título de capitalização</option><option value="sem_garantia">Ainda não sabe</option></select></label>
+            <label><span>Quantas pessoas vão morar</span><input id="crmFichaMoradores" type="number" min="0" max="20" /></label>
+          </div>
+          <label class="check-inline crm-ficha-check"><input id="crmFichaPets" type="checkbox" /> Tem animal de estimação</label>
+        </div>
+        <div class="crm-ficha-grupo" data-ficha-grupo="investidor">
+          <span class="crm-rotulo">Investidor</span>
+          <label><span>Objetivo do investimento</span><select id="crmFichaObjetivo"><option value="">—</option><option value="renda_aluguel">Renda de aluguel</option><option value="valorizacao">Valorização</option><option value="revenda">Comprar para revender</option><option value="reserva">Reserva de patrimônio</option></select></label>
+        </div>
+      </details>
+      <p id="crmCliAvisoProp" class="muted-text" hidden>Proprietário cadastrado por corretor vai para a aprovação da Central. Depois disso, os dados ficam só com a Central.</p>
+      <label id="crmCliCorretorLabel" data-so-central><span>Corretor responsável</span><select id="crmCliCorretor"></select></label>
+      <label><span>Observações</span><textarea id="crmCliObs" rows="3"></textarea></label>
+      <p class="crm-lgpd">Aviso de privacidade: os dados do cliente são tratados conforme a LGPD (Lei nº 13.709/2018) e usados só para o atendimento imobiliário.</p>
+      <label class="check-inline"><input id="crmCliLgpd" type="checkbox" /> O cliente foi informado sobre o uso dos dados.</label>
+      <div class="dialog-actions">
+        <button id="crmCliExcluir" type="button" class="danger-button" hidden>Excluir</button>
+        <button id="crmCliRecusar" type="button" class="danger-button" hidden>Recusar</button>
+        <button id="crmCliNovaNeg" type="button" class="secondary-button" hidden>+ Negociação</button>
+        <button id="crmCliAprovar" type="button" class="primary-button" hidden>Aprovar cadastro</button>
+        <button id="crmCliSalvar" type="button" class="primary-button">Salvar</button>
+      </div>
+      <div id="crmCliMsg" class="form-message" hidden></div>
+      <div id="crmCliNegociacoes" class="crm-sublista" hidden></div>
+      <div id="crmCliImoveis" class="crm-sublista" hidden></div>
+      <div id="crmCliIndicou" class="crm-sublista" hidden></div>
+      <div id="crmCliLembretes" class="crm-sublista crm-lembretes" hidden></div>
+      <div id="crmCliHistorico" class="crm-timeline" hidden></div>
+    </form>
+  </dialog>
+
+  <dialog id="crmNegDialog" class="crm-dialog crm-dialog-larga">
+    <form method="dialog" class="dialog-card">
+      <button class="dialog-close" type="button" value="cancel">×</button>
+      <span id="crmNegEyebrow" class="eyebrow">NEGOCIAÇÃO</span>
+      <h2 id="crmNegTitulo">Nova negociação</h2>
+      <div id="crmNegContato" class="crm-contato-rapido" hidden></div>
+      <div id="crmNegEtapas" class="crm-stepper" hidden></div>
+      <div id="crmNegSituacao" class="aprovacao-banner" hidden></div>
+      <div class="form-row">
+        <label><span>Cliente</span>
+          <span class="crm-com-botao"><select id="crmNegCliente"></select><button id="crmNegNovoCli" type="button" class="secondary-button" title="Cadastrar cliente novo">+ Novo</button></span>
+        </label>
+        <label><span>Funil</span><select id="crmNegFunil"></select></label>
+      </div>
+      <div class="form-row">
+        <label><span>Imóvel de interesse</span><select id="crmNegImovel"></select></label>
+        <label><span>Valor da negociação</span><input id="crmNegValor" inputmode="decimal" placeholder="R$" autocomplete="off" /></label>
+      </div>
+      <div class="form-row">
+        <label><span>Resumo</span><input id="crmNegTituloInput" placeholder="ex.: casa 3 quartos perto da escola" autocomplete="off" /></label>
+        <label id="crmNegCorretorLabel" data-so-central><span>Corretor responsável</span><select id="crmNegCorretor"></select></label>
+      </div>
+      <label id="crmNegPrazoLabel" class="crm-prazo" hidden><span>Prazo do contrato de locação (meses)</span><input id="crmNegPrazo" type="number" min="1" max="120" placeholder="30" /></label>
+      <details class="crm-perfil">
+        <summary>O que o cliente procura</summary>
+        <div class="form-row">
+          <label><span>Bairros (separe por vírgula)</span><input id="crmPerfilBairros" autocomplete="off" /></label>
+          <label><span>Tipo de imóvel</span><select id="crmPerfilTipo"></select></label>
+        </div>
+        <div class="form-row">
+          <label><span>Valor mínimo</span><input id="crmPerfilMin" inputmode="decimal" placeholder="R$" autocomplete="off" /></label>
+          <label><span>Valor máximo</span><input id="crmPerfilMax" inputmode="decimal" placeholder="R$" autocomplete="off" /></label>
+        </div>
+        <div class="form-row">
+          <label><span>Quartos (no mínimo)</span><input id="crmPerfilQuartos" type="number" min="0" /></label>
+          <label><span>Vagas (no mínimo)</span><input id="crmPerfilVagas" type="number" min="0" /></label>
+        </div>
+      </details>
+      <div id="crmCompat" class="crm-compat" hidden></div>
+      <div class="crm-proxima">
+        <span class="eyebrow">PRÓXIMA AÇÃO</span>
+        <div class="form-row">
+          <label><span>Quando</span><input id="crmNegAcaoEm" type="datetime-local" /></label>
+          <label><span>O que fazer</span><input id="crmNegAcaoTexto" placeholder="ex.: ligar para confirmar a visita" autocomplete="off" /></label>
+        </div>
+      </div>
+      <div class="dialog-actions">
+        <button id="crmNegExcluir" type="button" class="danger-button" hidden>Excluir</button>
+        <button id="crmNegSalvar" type="button" class="primary-button">Salvar</button>
+      </div>
+      <div id="crmNegMsg" class="form-message" hidden></div>
+      <section id="crmNegContrato" class="crm-visitas com-negocio" hidden></section>
+      <section id="crmNegComissoes" class="crm-visitas com-negocio" hidden></section>
+      <section id="crmNegVisitas" class="crm-visitas" hidden></section>
+      <section id="crmNegAtendimento" class="crm-atendimento" hidden>
+        <span class="eyebrow">REGISTRAR ATENDIMENTO</span>
+        <div id="crmAtTipos" class="crm-at-tipos"></div>
+        <textarea id="crmAtTexto" rows="2" placeholder="O que foi conversado?"></textarea>
+        <div class="form-row">
+          <label><span>Agendar próxima ação (opcional)</span><input id="crmAtProxEm" type="datetime-local" /></label>
+          <label><span>O que fazer</span><input id="crmAtProxTexto" placeholder="ex.: enviar a proposta" autocomplete="off" /></label>
+        </div>
+        <label id="crmAtConcluirLabel" class="check-inline" hidden><input id="crmAtConcluir" type="checkbox" /> Concluí a próxima ação que estava agendada</label>
+        <button id="crmAtSalvar" type="button" class="primary-button">Registrar atendimento</button>
+        <div id="crmNegHistorico" class="crm-timeline"></div>
+      </section>
+    </form>
+  </dialog>
+
+  <dialog id="comRegraDialog" class="crm-dialog crm-dialog-larga">
+    <form method="dialog" class="dialog-card">
+      <button class="dialog-close" type="button" value="cancel">×</button>
+      <span class="eyebrow">REGRA DE COMISSÃO</span>
+      <h2 id="comRegraTitulo">Nova regra de comissão</h2>
+      <div class="form-row">
+        <label><span>Nome da regra</span><input id="comRegraNome" placeholder="ex.: 1º aluguel + 2% ao mês" autocomplete="off" /></label>
+        <label><span>Começar de um modelo</span><select id="comModelo">
+          <option value="">Escolha um modelo…</option>
+          <option value="aluguel_integral">1º aluguel integral do corretor</option>
+          <option value="aluguel_mais_mensal">1º aluguel + 2% do aluguel todo mês</option>
+          <option value="venda_captador">Venda: quem fechou + quem captou</option>
+          <option value="parceria">Venda em parceria 50/50</option>
+          <option value="meta">Venda escalonada por meta do mês</option>
+          <option value="taxa_adm">1º aluguel + % da taxa de administração</option>
+          <option value="bonus">Bônus fixo por locação</option>
+        </select></label>
+      </div>
+      <label><span>Descrição (opcional)</span><input id="comRegraDescricao" placeholder="Explica a regra para a equipe" autocomplete="off" /></label>
+      <div class="form-row">
+        <label><span>Comissão da imobiliária na venda (%)</span><input id="comRegraHonorarios" inputmode="decimal" placeholder="6" /></label>
+        <label class="check-inline com-padrao"><input id="comRegraPadrao" type="checkbox" /> Regra padrão da casa (vale para quem não tem regra própria)</label>
+      </div>
+      <span class="eyebrow">PARTES DA REGRA</span>
+      <p class="muted-text">Cada parte é um pagamento: quem recebe, sobre o quê, quanto e quando. Some quantas partes precisar.</p>
+      <div id="comPartes" class="com-partes"></div>
+      <button id="comAddParte" type="button" class="secondary-button">+ Adicionar parte</button>
+      <section class="com-simulador">
+        <span class="eyebrow">TESTAR A REGRA</span>
+        <div class="com-sim-campos">
+          <label><span>Tipo de negócio</span><select id="comSimFinalidade"><option value="locacao">Locação</option><option value="venda">Venda</option></select></label>
+          <label><span id="comSimValorRotulo">Aluguel mensal</span><input id="comSimValor" inputmode="decimal" value="2.500" /></label>
+          <label id="comSimPrazoLabel"><span>Prazo do contrato (meses)</span><input id="comSimPrazo" type="number" min="1" max="120" value="30" /></label>
+          <label id="comSimTaxaLabel"><span>Taxa de administração (%)</span><input id="comSimTaxa" inputmode="decimal" value="10" /></label>
+          <label id="comSimMetaLabel" hidden><span>Já fechado pelo corretor no mês</span><input id="comSimMeta" inputmode="decimal" placeholder="R$ 0" /></label>
+          <button id="comSimular" type="button" class="primary-button">Simular</button>
+        </div>
+        <div id="comSimResultado" class="com-sim-resultado"></div>
+      </section>
+      <div class="dialog-actions">
+        <button id="comRegraExcluir" type="button" class="danger-button" hidden>Excluir</button>
+        <button id="comRegraSalvar" type="button" class="primary-button">Salvar regra</button>
+      </div>
+      <div id="comRegraMsg" class="form-message" hidden></div>
+    </form>
+  </dialog>
+  <dialog id="crmVisitaDialog" class="crm-dialog">
+    <form method="dialog" class="dialog-card">
+      <button class="dialog-close" type="button" value="cancel">×</button>
+      <span class="eyebrow">VISITA</span>
+      <h2>Como foi a visita?</h2>
+      <p id="crmVisInfo" class="muted-text">—</p>
+      <div id="crmVisSituacao" class="crm-at-tipos"></div>
+      <div id="crmVisResultadoBox"><span class="crm-rotulo">O que o cliente achou</span><div id="crmVisResultado" class="crm-at-tipos"></div></div>
+      <label><span>Comentário</span><textarea id="crmVisComentario" rows="2" placeholder="ex.: gostou da área, achou o valor alto"></textarea></label>
+      <div class="form-row">
+        <label><span>Próximo passo (opcional)</span><input id="crmVisProxEm" type="datetime-local" /></label>
+        <label><span>O que fazer</span><input id="crmVisProxTexto" placeholder="ex.: enviar a proposta" autocomplete="off" /></label>
+      </div>
+      <div class="dialog-actions"><button id="crmVisSalvar" type="button" class="primary-button">Registrar</button></div>
+      <div id="crmVisMsg" class="form-message" hidden></div>
+    </form>
+  </dialog>
+  <dialog id="crmMotivoDialog" class="crm-dialog">
+    <form method="dialog" class="dialog-card">
+      <button class="dialog-close" type="button" value="cancel">×</button>
+      <span id="crmMotEyebrow" class="eyebrow">MUDAR ETAPA</span>
+      <h2 id="crmMotTitulo">—</h2>
+      <label id="crmMotPerdaLabel"><span>Motivo da perda</span><select id="crmMotPerda"></select></label>
+      <label><span id="crmMotTextoRotulo">Motivo</span><textarea id="crmMotTexto" rows="3"></textarea></label>
+      <button id="crmMotConfirmar" type="button" class="primary-button">Confirmar</button>
+      <div id="crmMotMsg" class="form-message" hidden></div>
+    </form>
+  </dialog>
+
+  <dialog id="crmCompromissoDialog" class="crm-dialog">
+    <form method="dialog" class="dialog-card">
+      <button class="dialog-close" type="button" value="cancel">×</button>
+      <span class="eyebrow">AGENDA</span>
+      <h2>Novo compromisso</h2>
+      <label><span>Com qual cliente / negociação</span><select id="crmCompNeg"></select></label>
+      <p id="crmCompSemNeg" class="muted-text" hidden>Nenhuma negociação em aberto. Crie uma em Negociações (+ Nova negociação) e volte aqui.</p>
+      <div class="crm-at-tipos" id="crmCompTipos"></div>
+      <div class="form-row">
+        <label><span>Quando</span><input id="crmCompEm" type="datetime-local" /></label>
+        <label><span>O que fazer</span><input id="crmCompTexto" placeholder="ex.: visita ao imóvel com o cliente" autocomplete="off" /></label>
+      </div>
+      <p class="muted-text">O compromisso vira a próxima ação da negociação e aparece na Agenda (e no cartão do quadro).</p>
+      <button id="crmCompSalvar" type="button" class="primary-button">Agendar</button>
+      <div id="crmCompMsg" class="form-message" hidden></div>
+    </form>
+  </dialog>
+
+  <dialog id="crmRecusarCliDialog" class="crm-dialog">
+    <form method="dialog" class="dialog-card">
+      <button class="dialog-close" type="button" value="cancel">×</button>
+      <span class="eyebrow">RECUSAR CADASTRO</span>
+      <h2>Por que este cadastro foi recusado?</h2>
+      <label><span>Motivo</span><textarea id="crmRecusarCliMotivo" rows="3"></textarea></label>
+      <button id="crmRecusarCliConfirmar" type="button" class="danger-button">Recusar cadastro</button>
+      <div id="crmRecusarCliMsg" class="form-message" hidden></div>
+    </form>
+  </dialog>
+
+  <dialog id="interesseDialog">
+    <form method="dialog" class="dialog-card">
+      <button class="dialog-close" type="button" value="cancel">×</button>
+      <span class="eyebrow">INTERESSE DO CLIENTE</span>
+      <h2>Registrar interesse do cliente</h2>
+      <p id="interesseImovelNome" class="muted-text" style="margin:-8px 0 0">—</p>
+      <label><span>O cliente quer</span>
+        <select id="interesseTipoInput"><option value="aluguel">Alugar</option><option value="compra">Comprar</option></select>
+      </label>
+      <p style="font-size:12px;color:var(--muted);margin:0">Aviso de privacidade: os dados do cliente informados abaixo são tratados conforme a Lei Geral de Proteção de Dados (LGPD, Lei nº 13.709/2018) e usados apenas para este atendimento.</p>
+      <label style="display:flex;flex-direction:row;align-items:flex-start;gap:8px"><input id="interesseConsentInput" type="checkbox" required style="margin-top:3px;flex:none;width:auto" /><span style="text-transform:none;font-size:12px;font-weight:500;letter-spacing:normal;color:var(--text,#1a1a1a)">Expliquei ao cliente como os dados serão usados, conforme o aviso acima.</span></label>
+      <label><span>Nome do cliente</span><input id="interesseNomeInput" required /></label>
+      <div class="form-row">
+        <label><span>Telefone do cliente</span><input id="interesseTelefoneInput" inputmode="tel" /></label>
+        <label><span>CPF do cliente, se disponível</span><input id="interesseCpfInput" inputmode="numeric" placeholder="000.000.000-00" /></label>
+      </div>
+      <label><span>E-mail do cliente, se disponível</span><input id="interesseEmailInput" type="email" placeholder="cliente@email.com" /></label>
+      <label><span>Endereço do cliente, se disponível</span><input id="interesseEnderecoInput" placeholder="Rua, número, bairro, cidade" /></label>
+      <label><span>Observação</span><textarea id="interesseObservacaoInput" rows="3"></textarea></label>
+      <button id="submitInteresseButton" type="button" class="primary-button full-width">Enviar interesse</button>
+      <div id="interesseDialogMessage" class="form-message" hidden></div>
+    </form>
+  </dialog>
+
+  <dialog id="recusarCadastroDialog">
+    <form method="dialog" class="dialog-card">
+      <button class="dialog-close" type="button" value="cancel">×</button>
+      <span class="eyebrow">RECUSAR CADASTRO</span>
+      <h2>Por que este cadastro foi recusado?</h2>
+      <p style="color:var(--muted);font-size:12px;margin:-8px 0 0">O corretor vê o motivo, corrige e pode enviar de novo.</p>
+      <label><span>Motivo</span><textarea id="recusarMotivoInput" rows="3" placeholder="ex.: faltam fotos da fachada e o valor do condomínio"></textarea></label>
+      <button id="confirmRecusarButton" type="button" class="danger-button">Recusar cadastro</button>
+      <div id="recusarMessage" class="form-message" hidden></div>
+    </form>
+  </dialog>
+
+  <dialog id="deleteConstrucaoDialog">
+    <form method="dialog" class="dialog-card">
+      <button class="dialog-close" type="button" value="cancel">×</button>
+      <span class="eyebrow">EXCLUIR IMÓVEL</span>
+      <h2>Excluir <span id="deleteConstrucaoName">—</span>?</h2>
+      <p style="color:var(--muted);font-size:12px;margin:-8px 0 0">Isso remove o cadastro e as fotos para sempre — não é possível desfazer.</p>
+      <button id="confirmDeleteConstrucaoButton" type="button" class="danger-button">Excluir imóvel</button>
+    </form>
+  </dialog>
+
+  <dialog id="fotoLightbox" class="foto-lightbox">
+    <button id="fotoLightboxClose" class="close-button" type="button" aria-label="Fechar">×</button>
+    <button id="fotoLightboxPrev" class="hero-nav hero-nav-prev" type="button" aria-label="Foto anterior">‹</button>
+    <img id="fotoLightboxImg" src="" alt="Foto do imóvel" />
+    <button id="fotoLightboxNext" class="hero-nav hero-nav-next" type="button" aria-label="Próxima foto">›</button>
+    <span id="fotoLightboxContador" class="imovel-hero-contador"></span>
+  </dialog>
+
+  <dialog id="inviteAluguelDialog">
+    <form method="dialog" class="dialog-card">
+      <button class="dialog-close" type="button" value="cancel">×</button>
+      <span class="eyebrow">NOVO ACESSO</span>
+      <h2>Gerar convite</h2>
+      <label><span>Nome da pessoa</span><input id="inviteAluguelNameInput" required /></label>
+      <label><span>CPF do usuário (opcional)</span><input id="inviteAluguelCpfInput" placeholder="000.000.000-00" /></label>
+      <p style="color:var(--muted);font-size:11px;margin:-8px 0 0">Opcional — preencher ajuda a identificar quem cadastrou os dados de um cliente, reforçando a conformidade com a LGPD.</p>
+      <div class="form-row">
+        <label><span>Perfil</span>
+          <select id="inviteAluguelRoleInput">
+            <option value="corretor">Corretor</option>
+            <option value="central_vendas">Central (equipe do escritório)</option>
+            <option value="administrador">Administrador</option>
+            <option value="gestor">Gestor (acompanha e conduz a equipe)</option>
+            <option value="financeiro">Financeiro (comissões e indicadores)</option>
+          </select>
+        </label>
+        <label><span>% de comissão (opcional)</span><input id="inviteAluguelPercentualInput" type="number" step="0.01" min="0" max="100" placeholder="ex.: 10" /></label>
+      </div>
+      <button id="createInviteAluguelButton" type="button" class="primary-button">Gerar código</button>
+      <div id="inviteAluguelResult" class="invite-result" hidden></div>
+    </form>
+  </dialog>
+
+  <dialog id="directUserAluguelDialog">
+    <form method="dialog" class="dialog-card">
+      <button class="dialog-close" type="button" value="cancel">×</button>
+      <span class="eyebrow">ACESSO DIRETO</span>
+      <h2>Criar usuário já com senha</h2>
+      <p style="color:var(--muted);font-size:12px;margin:-8px 0 0">Cria o login pronto na hora. Se o e-mail já tiver um acesso, a senha digitada é ignorada e só vinculamos o acesso a esta carteira.</p>
+      <label><span>Nome da pessoa</span><input id="directAluguelNameInput" required /></label>
+      <label><span>CPF do usuário (opcional)</span><input id="directAluguelCpfInput" placeholder="000.000.000-00" /></label>
+      <p style="color:var(--muted);font-size:11px;margin:-8px 0 0">Opcional — preencher ajuda a identificar quem cadastrou os dados de um cliente, reforçando a conformidade com a LGPD.</p>
+      <label><span>E-mail</span><input id="directAluguelEmailInput" type="email" required /></label>
+      <label><span>Senha</span><input id="directAluguelPasswordInput" type="text" minlength="6" required /></label>
+      <div class="form-row">
+        <label><span>Perfil</span>
+          <select id="directAluguelRoleInput">
+            <option value="corretor">Corretor</option>
+            <option value="central_vendas">Central (equipe do escritório)</option>
+            <option value="administrador">Administrador</option>
+            <option value="gestor">Gestor (acompanha e conduz a equipe)</option>
+            <option value="financeiro">Financeiro (comissões e indicadores)</option>
+          </select>
+        </label>
+        <label><span>% de comissão (opcional)</span><input id="directAluguelPercentualInput" type="number" step="0.01" min="0" max="100" placeholder="ex.: 10" /></label>
+      </div>
+      <label><span>Validade do acesso</span>
+        <select id="directAluguelExpiryInput">
+          <option value="">Sem validade (nunca expira)</option>
+          <option value="2">2 horas</option>
+          <option value="8">8 horas</option>
+          <option value="24">1 dia</option>
+          <option value="168">7 dias</option>
+          <option value="720">30 dias</option>
+        </select>
+      </label>
+      <button id="createDirectUserAluguelButton" type="button" class="primary-button">Criar acesso</button>
+      <div id="directUserAluguelMessage" class="form-message" hidden></div>
+    </form>
+  </dialog>
+
+  <dialog id="resetPasswordAluguelDialog">
+    <form method="dialog" class="dialog-card">
+      <button class="dialog-close" type="button" value="cancel">×</button>
+      <span class="eyebrow">REDEFINIR SENHA</span>
+      <h2>Nova senha temporária</h2>
+      <p style="color:var(--muted);font-size:12px;margin:-8px 0 0">Informe ao usuário para trocar assim que possível.</p>
+      <label><span>Nova senha (mínimo 6 caracteres)</span><input id="resetPasswordAluguelInput" type="text" minlength="6" required /></label>
+      <button id="confirmResetPasswordAluguelButton" type="button" class="primary-button">Redefinir senha</button>
+      <div id="resetPasswordAluguelMessage" class="form-message" hidden></div>
+    </form>
+  </dialog>
+
+  <dialog id="editPercentualDialog">
+    <form method="dialog" class="dialog-card">
+      <button class="dialog-close" type="button" value="cancel">×</button>
+      <span class="eyebrow">COMISSÃO DO CORRETOR</span>
+      <h2>Editar % de comissão</h2>
+      <p style="color:var(--muted);font-size:12px;margin:-8px 0 0">Esse percentual pode mudar conforme o combinado com a empresa contratante — vale só para esta carteira.</p>
+      <label><span>% de comissão</span><input id="editPercentualInput" type="number" step="0.01" min="0" max="100" placeholder="ex.: 10" /></label>
+      <button id="confirmEditPercentualButton" type="button" class="primary-button">Salvar percentual</button>
+      <div id="editPercentualMessage" class="form-message" hidden></div>
+    </form>
+  </dialog>
+
+  <dialog id="removeUserAluguelDialog">
+    <form method="dialog" class="dialog-card">
+      <button class="dialog-close" type="button" value="cancel">×</button>
+      <span class="eyebrow">REMOVER ACESSO</span>
+      <h2>Remover acesso de <span id="removeUserAluguelName">—</span>?</h2>
+      <p style="color:var(--muted);font-size:12px;margin:-8px 0 0">Isso remove o acesso a ESTA carteira de aluguéis. Se a pessoa tiver acesso a outra carteira, esse outro acesso continua funcionando normalmente.</p>
+      <button id="confirmRemoveUserAluguelButton" type="button" class="danger-button">Remover acesso</button>
+      <div id="removeUserAluguelMessage" class="form-message" hidden></div>
+    </form>
+  </dialog>
+
+  <dialog id="comissaoAluguelDialog">
+    <form method="dialog" class="dialog-card">
+      <button class="dialog-close" type="button" value="cancel">×</button>
+      <span class="eyebrow">COMISSÃO</span>
+      <h2>Registrar comissão</h2>
+      <label><span>Corretor</span><select id="comissaoAluguelCorretorInput"></select></label>
+      <div class="form-row">
+        <label><span>Valor do aluguel</span><input id="comissaoAluguelValorInput" placeholder="R$ 0,00" /></label>
+        <label><span>Percentual (%)</span><input id="comissaoAluguelPercentualInput" type="number" step="0.01" placeholder="ex.: 10" /></label>
+      </div>
+      <label><span>Valor da comissão</span><input id="comissaoAluguelValorComissaoInput" placeholder="Calculado automaticamente, ou informe manualmente" /></label>
+      <label><span>Observação</span><textarea id="comissaoAluguelObservacaoInput" rows="2"></textarea></label>
+      <button id="saveComissaoAluguelButton" type="button" class="primary-button">Registrar</button>
+      <div id="comissaoAluguelMessage" class="form-message" hidden></div>
+    </form>
+  </dialog>
+
+  <dialog id="finContratoDialog" class="crm-dialog crm-dialog-larga">
+    <form method="dialog" class="dialog-card" id="finContratoForm">
+      <button class="dialog-close" type="button" value="cancel">×</button>
+      <span class="eyebrow">ADMINISTRAÇÃO DE ALUGUEL</span>
+      <h2 id="finContratoTitulo">Novo contrato de locação</h2>
+      <input id="finCtNegociacao" type="hidden" />
+      <div id="finCtCobrancas"></div>
+      <div class="form-row">
+        <label><span>Imóvel</span><select id="finCtImovel"></select></label>
+        <label><span>Corretor que fechou</span><select id="finCtCorretor"></select></label>
+      </div>
+      <div class="form-row">
+        <label><span>Inquilino</span><select id="finCtInquilino"></select></label>
+        <label><span>Proprietário</span><select id="finCtProprietario"></select></label>
+      </div>
+      <div class="fin-grade">
+        <label><span>Aluguel (R$)</span><input id="finCtValor" inputmode="decimal" autocomplete="off" /></label>
+        <label><span>Vence todo dia</span><input id="finCtDia" type="number" min="1" max="28" /></label>
+        <label><span>Início</span><input id="finCtInicio" type="date" /></label>
+        <label><span>Prazo (meses)</span><input id="finCtPrazo" type="number" min="1" max="240" /></label>
+        <label><span>Reajuste anual</span><select id="finCtIndice"></select></label>
+        <label><span>Taxa de administração (%)</span><input id="finCtTaxa" inputmode="decimal" /></label>
+        <label><span>Intermediação: % do 1º aluguel</span><input id="finCtInter" inputmode="decimal" /></label>
+        <label><span>Multa por atraso (%)</span><input id="finCtMulta" inputmode="decimal" /></label>
+        <label><span>Juros ao mês (%)</span><input id="finCtJuros" inputmode="decimal" /></label>
+        <label><span>Repassar em até (dias após receber)</span><input id="finCtRepPrazo" type="number" min="0" max="60" /></label>
+      </div>
+      <div class="form-row">
+        <label><span>Garantia</span><select id="finCtGarantia"></select></label>
+        <label id="finCtGarantiaDetLabel"><span>Detalhe da garantia</span><input id="finCtGarantiaDet" placeholder="ex.: fiador João, apólice nº…" autocomplete="off" /></label>
+        <label id="finCtCaucaoLabel"><span>Valor da caução (R$)</span><input id="finCtCaucao" inputmode="decimal" /></label>
+      </div>
+      <span class="crm-rotulo">Cobrado junto com o aluguel, todo mês</span>
+      <div id="finCtItens" class="fin-itens"></div>
+      <button id="finCtAddItem" type="button" class="secondary-button fin-mini">+ Item (condomínio, IPTU…)</button>
+      <label><span>Dados para o repasse ao proprietário (PIX, banco)</span><input id="finCtRepDados" autocomplete="off" /></label>
+      <label><span>Observações</span><textarea id="finCtObs" rows="2"></textarea></label>
+      <p id="finCtMsg" class="form-message" hidden></p>
+      <div class="dialog-actions"><button id="finCtSalvar" type="button" class="primary-button">Criar contrato</button></div>
+      <div id="finCtAcoes" class="fin-ct-acoes" hidden>
+        <details><summary>Reajustar aluguel</summary>
+          <div class="fin-grade">
+            <label><span>Índice (<em id="finReajIndice"></em>) do período (%)</span><input id="finReajPct" inputmode="decimal" placeholder="ex.: 4,5" /></label>
+            <label><span>Novo valor (R$)</span><input id="finReajValor" inputmode="decimal" /></label>
+            <label><span>A partir do mês</span><input id="finReajDesde" type="month" /></label>
+          </div>
+          <p class="muted-text">Consulte o índice acumulado dos últimos 12 meses (IBGE / FGV) e digite aqui. O próximo reajuste fica para 12 meses depois.</p>
+          <button id="finReajAplicar" type="button" class="secondary-button">Aplicar reajuste</button>
+        </details>
+        <details><summary>Encerrar contrato</summary>
+          <div class="fin-grade">
+            <label><span>Data de saída</span><input id="finEncData" type="date" /></label>
+            <label><span>Motivo</span><input id="finEncMotivo" placeholder="ex.: fim do prazo, rescisão" autocomplete="off" /></label>
+          </div>
+          <label class="check-inline"><input id="finEncLiberar" type="checkbox" checked /> Imóvel volta a ficar disponível</label>
+          <button id="finEncAplicar" type="button" class="danger-button">Encerrar contrato</button>
+        </details>
+      </div>
+      <div id="finCtHistoricoBox" class="fin-historico" hidden><span class="crm-rotulo">Histórico do contrato</span><ul id="finCtHistorico"></ul></div>
+    </form>
+  </dialog>
+
+  <dialog id="finPagamentoDialog" class="crm-dialog">
+    <form method="dialog" class="dialog-card">
+      <button class="dialog-close" type="button" value="cancel">×</button>
+      <span class="eyebrow">RECEBER ALUGUEL</span>
+      <h2 id="finPgTitulo">Receber</h2>
+      <p id="finPgInfo" class="muted-text"></p>
+      <div class="fin-grade">
+        <label><span>Pago em</span><input id="finPgData" type="date" /></label>
+        <label><span>Forma</span><select id="finPgForma"></select></label>
+        <label><span>Multa (R$)</span><input id="finPgMulta" inputmode="decimal" /></label>
+        <label><span>Juros (R$)</span><input id="finPgJuros" inputmode="decimal" /></label>
+        <label><span>Desconto (R$)</span><input id="finPgDesconto" inputmode="decimal" placeholder="0" /></label>
+        <label><span>Valor recebido (R$)</span><input id="finPgValor" inputmode="decimal" /></label>
+      </div>
+      <div id="finPgPrevia" class="fin-previa"></div>
+      <label><span>Observação</span><input id="finPgObs" autocomplete="off" /></label>
+      <p id="finPgMsg" class="form-message" hidden></p>
+      <div class="dialog-actions"><button id="finPgSalvar" type="button" class="primary-button">Registrar pagamento</button></div>
+    </form>
+  </dialog>
+
+  <div id="finImpressao" class="fin-impressao" hidden>
+    <div class="fin-imp-barra"><button id="finImpImprimir" type="button" class="primary-button">Imprimir / salvar PDF</button><button id="finImpFechar" type="button" class="secondary-button">Fechar</button></div>
+    <div id="finImpConteudo"></div>
+  </div>
+
+  <div id="toast" class="toast" hidden></div>
+  <script src="vendor/leaflet/leaflet.js"></script>
+  <script src="marca.js"></script>
+  <script src="marca-dagua.js"></script>
+  <script src="vendor/supabase/supabase.js"></script>
+  <script src="avatar.js"></script>
+  <script src="crm.js"></script>
+  <script src="crm-painel.js"></script>
+  <script src="corretor-ui.js"></script>
+  <script src="comissoes.js"></script>
+  <script src="financeiro.js"></script>
+  <script src="financeiro-extra.js"></script>
+  <script src="integracoes.js"></script>
+  <script src="rural.js"></script>
+  <script src="perfis.js"></script>
+  <script src="documentos.js"></script>
+  <script src="crm-extras.js"></script>
+  <script src="app.js"></script>
+  <script src="pwa.js"></script>
+</body>
+</html>
