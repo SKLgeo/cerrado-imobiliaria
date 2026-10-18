@@ -58,7 +58,7 @@
     const MARCA = window.SKL_MARCA || {};
     const SUPABASE_URL = MARCA.supabase_url || "https://xigwlofqkmiibzbongkn.supabase.co";
     const SUPABASE_ANON_KEY = MARCA.supabase_anon_key || "sb_publishable_mqppAm9n79xl6rYafzXyNQ_mGVoX3Vd";
-    const APP_VERSION = "0.10.3";
+    const APP_VERSION = "0.10.4";
     const FOTOS_BUCKET = "fotos-construcoes";
     const CARTEIRA_ESCOLHIDA_KEY = "cerrado_imobiliaria_carteira_escolhida";
     const CENTRO_PADRAO = [ -15.793889, -47.882778 ];
@@ -219,8 +219,8 @@
             $("zonaFiltro").querySelectorAll("[data-zona]").forEach(x => x.classList.toggle("ativo", x === b));
             renderConstrucoes();
         }));
-        $("areaUnidadeInput").addEventListener("change", atualizarConversaoArea);
-        $("areaInput").addEventListener("input", atualizarConversaoArea);
+        $("areaUnidadeInput").addEventListener("change", () => { trocarUnidadeArea($("areaUnidadeInput").value); atualizarQualidade(); });
+        $("areaInput").addEventListener("input", () => { lembrarAreaDigitada(); atualizarConversaoArea(); });
         $("perimetroInput").addEventListener("change", carregarPerimetro);
         $("benfeitoriaAddButton").addEventListener("click", () => adicionarBenfeitoria($("benfeitoriaNomeInput").value, $("benfeitoriaDetalheInput").value));
         [ "benfeitoriaNomeInput", "benfeitoriaDetalheInput" ].forEach(id => $(id).addEventListener("keydown", e => {
@@ -1365,7 +1365,9 @@
         }
         $("construcaoTipoInput").value = construcao?.tipo_imovel || (rural ? "Fazenda" : "Casa");
         $("loteInput").checked = !!construcao?.lote;
-        $("areaUnidadeInput").value = construcao?.area_unidade || (rural ? "ha" : "m2");
+        // urbano é sempre em m²; rural abre na unidade do cadastro (novo: hectares)
+        const unidadeArea = rural ? (construcao?.area_unidade || "ha") : "m2";
+        $("areaUnidadeInput").value = unidadeArea;
         $("construcaoValorInput").value = construcao?.valor_aluguel != null ? formatMoney(construcao.valor_aluguel) : "";
         $("construcaoValorVendaInput").value = construcao?.valor_venda != null ? formatMoney(construcao.valor_venda) : "";
         $("construcaoCodigoInput").value = construcao?.codigo || "";
@@ -1374,8 +1376,9 @@
         $("condominioValorInput").value = construcao?.valor_condominio != null ? formatMoney(construcao.valor_condominio) : "";
         $("iptuTipoInput").value = construcao?.iptu_tipo || "";
         $("iptuValorInput").value = construcao?.valor_iptu != null ? formatMoney(construcao.valor_iptu) : "";
-        $("areaInput").value = construcao && construcao.area_unidade && construcao.area_unidade !== "m2" && construcao.area_valor != null
+        $("areaInput").value = unidadeArea !== "m2" && construcao?.area_unidade === unidadeArea && construcao.area_valor != null
             ? construcao.area_valor : (construcao?.area_m2 ?? "");
+        lembrarAreaDigitada();
         $("salasInput").value = construcao?.salas ?? "";
         $("quartosInput").value = construcao?.quartos ?? "";
         $("suitesInput").value = construcao?.suites ?? "";
@@ -1475,7 +1478,8 @@
         $("perimetroBloco").hidden = !rural;
         $("benfeitoriasBloco").hidden = !rural;
         if (interativo) {
-            if (rural && $("areaUnidadeInput").value === "m2") $("areaUnidadeInput").value = "ha";
+            // virou rural: passa para hectares convertendo o número (300 m² → 0,03 ha); virou urbano: volta a m² (abaixo)
+            if (rural && $("areaUnidadeInput").value === "m2") trocarUnidadeArea("ha");
             if (TIPOS_DE_LOTE.includes(select.value)) $("loteInput").checked = true;
             if (!docsPendentes || !docsPendentes.quantidade()) renderDocsImovel(construcoes.get(editandoId) || null);
         }
@@ -1509,11 +1513,35 @@
         renderBenfeitorias();
     }
 
+    // Guarda a área digitada em m² com precisão total: trocar ha → alqueire → ha volta ao mesmo número, sem perder casas.
+    function lembrarAreaDigitada() {
+        const valor = numeroOuNulo($("areaInput").value);
+        const unidade = $("areaUnidadeInput").value || "m2";
+        $("areaInput").dataset.unidade = unidade;
+        $("areaInput").dataset.m2 = valor != null ? String(valor * window.SKLRural.fator(unidade)) : "";
+    }
+    // Troca a unidade e converte o número (23,4571 ha → 234.571 m²), até 4 casas
+    function trocarUnidadeArea(nova) {
+        const input = $("areaInput");
+        const anterior = input.dataset.unidade || "m2";
+        if (input.value !== "" && nova !== anterior) {
+            const m2 = input.dataset.m2 !== "" && input.dataset.m2 != null ? Number(input.dataset.m2) : null;
+            const valor = m2 != null && Number.isFinite(m2)
+                ? window.SKLRural.converter(m2, "m2", nova)
+                : window.SKLRural.converter(numeroOuNulo(input.value), anterior, nova);
+            if (valor != null) input.value = valor;
+        }
+        $("areaUnidadeInput").value = nova;
+        input.dataset.unidade = nova;
+        atualizarConversaoArea();
+    }
+
     function atualizarConversaoArea() {
         const valor = numeroOuNulo($("areaInput").value);
         const unidade = $("areaUnidadeInput").value || "m2";
         const m2 = valor > 0 ? valor * window.SKLRural.fator(unidade) : 0;
-        $("areaConversao").textContent = m2 > 0 && (unidade !== "m2" || m2 >= 10000) ? window.SKLRural.conversaoTexto(m2, unidade) : "";
+        // a mesma área em outras unidades só no rural (urbano é sempre m²)
+        $("areaConversao").textContent = m2 > 0 && zonaRuralNoForm() ? window.SKLRural.conversaoTexto(m2, unidade) : "";
     }
 
     function definirPerimetro(geometria, nome) {
@@ -1571,6 +1599,7 @@
         if ($("areaUnidadeInput").value === "m2" && perimetroAreaM2 >= 10000) $("areaUnidadeInput").value = "ha";
         const unidade = $("areaUnidadeInput").value || "m2";
         $("areaInput").value = Math.round(perimetroAreaM2 / window.SKLRural.fator(unidade) * 10000) / 10000;
+        lembrarAreaDigitada();
         atualizarConversaoArea();
         atualizarQualidade();
     }
@@ -1615,15 +1644,10 @@
         const campos = camposDoImovel(tipo, lote);
         document.querySelectorAll("[data-car]").forEach(label => { label.hidden = !campos.includes(label.dataset.car); });
         $("areaRotulo").textContent = lote ? "Área do lote" : rural ? "Área total" : tipo === "Terreno" ? "Área do terreno" : "Área";
-        // hectare/alqueire: em imóvel rural, lote e terreno; o resto fica em m²
-        const comUnidade = rural || lote || TIPOS_DE_LOTE.includes(tipo);
+        // hectare/alqueire só em imóvel rural; urbano (inclusive lote e terreno) fica travado em m²
         const unidade = $("areaUnidadeInput");
-        if (!comUnidade && unidade.value && unidade.value !== "m2") {
-            const valor = numeroOuNulo($("areaInput").value);
-            if (valor != null) $("areaInput").value = Math.round(valor * window.SKLRural.fator(unidade.value) * 100) / 100;
-            unidade.value = "m2";
-        }
-        unidade.hidden = !comUnidade;
+        if (!rural && unidade.value && unidade.value !== "m2") trocarUnidadeArea("m2");
+        unidade.hidden = !rural;
         atualizarConversaoArea();
     }
 
@@ -1670,6 +1694,8 @@
             c.rural && [ "🌾", "Imóvel rural", c.tipo_imovel || null ],
             c.lote && [ "🏷️", "Lote", "sem construção" ],
             [ "📐", areaTexto(c) || "—", c.lote ? "Área do lote" : c.rural ? "Área total" : categoria === "terreno" ? "Área do terreno" : "Área" ],
+            // rural: a mesma área nas outras unidades (ha, alqueires, m²), sem arredondar
+            c.rural && Number(c.area_m2) > 0 && [ "🔁", window.SKLRural.conversaoTexto(Number(c.area_m2), c.area_valor != null ? (c.area_unidade || "m2") : "m2").replace(/^= /, ""), "Em outras unidades" ],
             mostrar("salas") && [ "🚪", plural(c.salas, "sala", "salas"), c.tipo_imovel || null ],
             mostrar("quartos") && [ "🛏️", plural(c.quartos, "quarto", "quartos") + (Number(c.suites) > 0 ? ` (${plural(c.suites, "suíte", "suítes")})` : ""), c.tipo_imovel || null ],
             mostrar("banheiros") && [ "🚿", plural(c.banheiros, "banheiro", "banheiros"), null ],

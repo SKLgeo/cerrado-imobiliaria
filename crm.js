@@ -1374,7 +1374,7 @@
     }
     function resumoImovel(c) {
         const partes = [];
-        if (Number(c.area_m2) > 0) partes.push(`${Number(c.area_m2).toLocaleString("pt-BR")} m²`);
+        if (Number(c.area_m2) > 0) partes.push(window.SKLRural ? window.SKLRural.areaTexto(c) : `${Number(c.area_m2).toLocaleString("pt-BR")} m²`);
         if (Number(c.quartos) > 0) partes.push(`${c.quartos} quarto${c.quartos == 1 ? "" : "s"}${Number(c.suites) > 0 ? ` (${c.suites} suíte${c.suites == 1 ? "" : "s"})` : ""}`);
         if (Number(c.salas) > 0) partes.push(`${c.salas} sala${c.salas == 1 ? "" : "s"}`);
         if (Number(c.banheiros) > 0) partes.push(`${c.banheiros} banheiro${c.banheiros == 1 ? "" : "s"}`);
