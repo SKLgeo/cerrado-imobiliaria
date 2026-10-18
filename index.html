@@ -317,6 +317,18 @@
 
       <section id="page-interesses" class="page">
         <p class="muted-text" style="margin:0 0 14px">Interesses de aluguel e de compra registrados pelos corretores, com a ficha de contato do cliente.</p>
+        <div class="crm-toolbar">
+          <input id="interesseBusca" type="search" placeholder="Buscar cliente, imóvel, celular, e-mail ou CPF" autocomplete="off" />
+          <select id="interesseTipoFiltro" aria-label="Tipo"><option value="">Alugar e comprar</option><option value="aluguel">Alugar</option><option value="compra">Comprar</option></select>
+          <select id="interesseSituacaoFiltro" aria-label="Situação">
+            <option value="">Todas as situações</option>
+            <option value="pendente">Pendente</option>
+            <option value="em_contato">Em contato</option>
+            <option value="concluido">Concluído</option>
+            <option value="descartado">Descartado</option>
+          </select>
+          <span id="interesseContagem" class="crm-contagem"></span>
+        </div>
         <div class="panel table-panel">
           <table><thead><tr><th>Imóvel</th><th>Tipo</th><th>Cliente</th><th>Telefone</th><th>CPF</th><th>E-mail</th><th>Observação</th><th>Data</th><th>Situação</th><th>Ações</th></tr></thead><tbody id="interessesTableBody"></tbody></table>
           <div id="interessesTableEmpty" class="empty-state" hidden>Nenhum interesse registrado ainda.</div>
@@ -331,8 +343,20 @@
             <button id="newDirectUserAluguelButton" class="secondary-button">Criar acesso direto (com prazo)</button>
           </div>
         </div>
+        <div class="crm-toolbar">
+          <input id="equipeBusca" type="search" placeholder="Buscar por nome ou e-mail" autocomplete="off" />
+          <select id="equipePapelFiltro" aria-label="Acesso"><option value="">Todos os acessos</option></select>
+          <select id="equipeSituacaoFiltro" aria-label="Situação">
+            <option value="">Todas as situações</option>
+            <option value="ativo">Ativos</option>
+            <option value="bloqueado">Bloqueados</option>
+            <option value="expirado">Com prazo vencido</option>
+          </select>
+          <span id="equipeContagem" class="crm-contagem"></span>
+        </div>
         <div class="panel table-panel">
           <table><thead><tr><th>Nome</th><th>E-mail</th><th>Acesso</th><th>Regra de comissão</th><th>Situação</th><th>Ações</th></tr></thead><tbody id="corretorTableBody"></tbody></table>
+          <div id="equipeVazio" class="empty-state" hidden>Ninguém encontrado com esses filtros.</div>
         </div>
         <article class="panel">
           <div class="panel-heading"><h2>Convites aguardando ativação</h2></div>

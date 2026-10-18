@@ -58,7 +58,7 @@
     const MARCA = window.SKL_MARCA || {};
     const SUPABASE_URL = MARCA.supabase_url || "https://xigwlofqkmiibzbongkn.supabase.co";
     const SUPABASE_ANON_KEY = MARCA.supabase_anon_key || "sb_publishable_mqppAm9n79xl6rYafzXyNQ_mGVoX3Vd";
-    const APP_VERSION = "0.12.2";
+    const APP_VERSION = "0.12.3";
     const FOTOS_BUCKET = "fotos-construcoes";
     const CARTEIRA_ESCOLHIDA_KEY = "cerrado_imobiliaria_carteira_escolhida";
     const CENTRO_PADRAO = [ -15.793889, -47.882778 ];
@@ -192,6 +192,8 @@
         $("newConstrucaoButton").addEventListener("click", () => openConstrucaoDialog(null));
         $("novoCadastroButton").addEventListener("click", () => openConstrucaoDialog(null));
         $("cadastrosFiltro").addEventListener("change", renderCadastros);
+        [ "equipeBusca", "equipePapelFiltro", "equipeSituacaoFiltro" ].forEach(id => $(id).addEventListener(id === "equipeBusca" ? "input" : "change", renderCorretores));
+        [ "interesseBusca", "interesseTipoFiltro", "interesseSituacaoFiltro" ].forEach(id => $(id).addEventListener(id === "interesseBusca" ? "input" : "change", renderInteresses));
         $("saveConstrucaoButton").addEventListener("click", () => salvarImovel());
         $("enviarCadastroButton").addEventListener("click", () => salvarImovel({ enviar: true }));
         $("aprovarCadastroButton").addEventListener("click", () => salvarImovel({ aprovar: true }));
@@ -708,7 +710,9 @@
             imoveis: () => [ ...construcoes.values() ],
             fotoHtml: (id, tamanho) => fotoDoUsuario(id, tamanho) || (window.SKLAvatar && currentUser ? window.SKLAvatar.html(currentUser.display_name, currentUser.foto_path, tamanho) : ""),
             abrirImovel: id => { const c = construcoes.get(id); if (c) openConstrucaoDialog(c); },
-            novoCadastro: () => openConstrucaoDialog(null)
+            novoCadastro: () => openConstrucaoDialog(null),
+            equipe: () => corretores,
+            recarregarCadastros: () => renderCadastros()
         };
     }
 
@@ -1211,9 +1215,11 @@
         if (gerencia) {
             const filtro = $("cadastrosFiltro").value || "pendente";
             const idsCorretores = new Set(corretores.filter(u => u.papel === "corretor").map(u => u.id));
-            lista = [ ...construcoes.values() ].filter(c => filtro === "aprovado"
+            // modo corretor vendo a tela de um corretor: só os cadastros dele
+            const foco = window.SKLModoCorretor && window.SKLModoCorretor.ativo() ? window.SKLModoCorretor.foco() : "";
+            lista = [ ...construcoes.values() ].filter(c => (!foco || c.cadastrado_por === foco) && (filtro === "aprovado"
                 ? c.aprovacao === "aprovado" && idsCorretores.has(c.cadastrado_por)
-                : c.aprovacao === filtro);
+                : c.aprovacao === filtro));
             lista.sort((a, b) => String(b.enviado_em || b.updated_at).localeCompare(String(a.enviado_em || a.updated_at)));
         } else {
             lista = [ ...construcoes.values() ].filter(c => c.cadastrado_por && c.cadastrado_por === currentUser.id);
@@ -2234,8 +2240,22 @@
 
     const INTERESSE_STATUS = { pendente: "Pendente", em_contato: "Em contato", concluido: "Concluído", descartado: "Descartado" };
 
+    function interessePassaFiltro(i) {
+        const tipo = $("interesseTipoFiltro").value, sit = $("interesseSituacaoFiltro").value;
+        if (tipo && (i.tipo === "compra" ? "compra" : "aluguel") !== tipo) return false;
+        if (sit && i.status !== sit) return false;
+        const termo = normalizar($("interesseBusca").value);
+        if (!termo) return true;
+        const imovel = construcoes.get(i.construcao_id);
+        if (normalizar([ i.cliente_nome, i.cliente_email, i.observacao, imovel && imovel.nome, imovel && imovel.codigo ].join(" ")).includes(termo)) return true;
+        const d = termo.replace(/\D/g, "");
+        return d.length >= 3 && (String(i.cliente_telefone || "").replace(/\D/g, "").includes(d) || String(i.cliente_cpf || "").replace(/\D/g, "").includes(d));
+    }
     function renderInteresses() {
-        const rows = [ ...interesses.values() ];
+        const todos = [ ...interesses.values() ];
+        const rows = todos.filter(interessePassaFiltro);
+        $("interesseContagem").textContent = rows.length === todos.length ? `${todos.length} interesse${todos.length === 1 ? "" : "s"}` : `${rows.length} de ${todos.length}`;
+        $("interessesTableEmpty").textContent = todos.length ? "Nenhum interesse com esses filtros." : "Nenhum interesse registrado ainda.";
         $("interessesTableEmpty").hidden = rows.length > 0;
         const podeAnonimizar = currentUser.papel === "administrador";
         const statusEncerrados = [ "concluido", "descartado" ];
@@ -2325,6 +2345,7 @@
             .eq("carteira_id", carteiraId).is("usado_em", null).gt("expira_em", (new Date).toISOString());
         invitesAluguel = conviteRows || [];
         renderCorretores();
+        if (window.SKLModoCorretor) window.SKLModoCorretor.atualizarEquipe();
     }
 
     function corretorStatusPill(user) {
@@ -2387,8 +2408,26 @@
             toast(error.message);
         }
     }
+    // busca e filtros da tela Equipe (como na tela Clientes)
+    function corretorPassaFiltro(user) {
+        const papel = $("equipePapelFiltro").value, sit = $("equipeSituacaoFiltro").value;
+        if (papel && user.papel !== papel) return false;
+        const expirado = !!user.expires_at && new Date(user.expires_at).getTime() < Date.now();
+        if (sit === "ativo" && (!user.active || expirado)) return false;
+        if (sit === "bloqueado" && user.active) return false;
+        if (sit === "expirado" && !expirado) return false;
+        const termo = normalizar($("equipeBusca").value);
+        return !termo || normalizar([ user.display_name, user.email ].join(" ")).includes(termo);
+    }
     function renderCorretores() {
-        $("corretorTableBody").innerHTML = corretores.map(user => {
+        const selPapel = $("equipePapelFiltro"), papelAtual = selPapel.value;
+        const papeis = [ ...new Set(corretores.map(u => u.papel)) ];
+        selPapel.innerHTML = '<option value="">Todos os acessos</option>' + papeis.map(p => `<option value="${h(p)}">${h(ROLE[p] || p)}</option>`).join("");
+        selPapel.value = papeis.includes(papelAtual) ? papelAtual : "";
+        const visiveis = corretores.filter(corretorPassaFiltro);
+        $("equipeContagem").textContent = visiveis.length === corretores.length ? `${corretores.length} pessoa${corretores.length === 1 ? "" : "s"}` : `${visiveis.length} de ${corretores.length}`;
+        $("equipeVazio").hidden = visiveis.length > 0 || !corretores.length;
+        $("corretorTableBody").innerHTML = visiveis.map(user => {
             const perfilHtml = window.SKLPerfis ? `<div class="perfil-linha">${window.SKLPerfis.chips(user.perfis_atuacao, "Sem perfil de atuação")}</div>` : "";
             const percentualTexto = window.SKLComissoes ? window.SKLComissoes.celulaRegra(user, canManageCorretor(user)) : (user.percentual_comissao != null ? `${user.percentual_comissao}%` : "—");
             if (!canManageCorretor(user)) {
