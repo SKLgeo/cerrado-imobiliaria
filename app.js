@@ -58,7 +58,7 @@
     const MARCA = window.SKL_MARCA || {};
     const SUPABASE_URL = MARCA.supabase_url || "https://xigwlofqkmiibzbongkn.supabase.co";
     const SUPABASE_ANON_KEY = MARCA.supabase_anon_key || "sb_publishable_mqppAm9n79xl6rYafzXyNQ_mGVoX3Vd";
-    const APP_VERSION = "0.10.4";
+    const APP_VERSION = "0.11.0";
     const FOTOS_BUCKET = "fotos-construcoes";
     const CARTEIRA_ESCOLHIDA_KEY = "cerrado_imobiliaria_carteira_escolhida";
     const CENTRO_PADRAO = [ -15.793889, -47.882778 ];
@@ -792,6 +792,8 @@
         atualizarChipsConta();
         const seguro = async (nome, fn) => { try { await fn(); } catch (e) { console.error("Falha ao iniciar " + nome, e); } };
         if (window.SKLComissoes) await seguro("comissões", () => window.SKLComissoes.iniciar(contextoComissoes()));
+        if (window.SKLDivisao) await seguro("divisão do negócio", () => window.SKLDivisao.iniciar(contextoComissoes()));
+        if (window.SKLMetas) await seguro("metas", () => window.SKLMetas.iniciar(contextoComissoes()));
         if (veTudo()) await loadCorretores();
         await loadConstrucoes();
         if (gerencia) await loadInteresses();
@@ -810,6 +812,8 @@
     function logout() {
         if (window.SKLCRM) window.SKLCRM.sair();
         if (window.SKLFinanceiro) window.SKLFinanceiro.sair();
+        if (window.SKLDivisao) window.SKLDivisao.sair();
+        if (window.SKLMetas) window.SKLMetas.sair();
         if (window.SKLModoCorretor) window.SKLModoCorretor.sair();
         sb.auth.signOut();
         carteiraId = null;
@@ -2298,7 +2302,7 @@
 
     async function loadCorretores() {
         const { data: vinculos, error } = await sb.from("carteira_aluguel_usuarios")
-            .select("usuario_id, papel, ativo, expira_em, email, percentual_comissao, regra_comissao_id, perfis_atuacao, perfis(nome_exibicao, foto_path)")
+            .select("usuario_id, papel, ativo, expira_em, email, percentual_comissao, regra_comissao_id, perfis_atuacao, contratado_em, perfis(nome_exibicao, foto_path)")
             .eq("carteira_id", carteiraId);
         if (error) { toast(traduzErro(error.message)); return; }
         corretores = (vinculos || []).map(v => ({
@@ -2311,7 +2315,8 @@
             expires_at: v.expira_em,
             percentual_comissao: v.percentual_comissao,
             regra_comissao_id: v.regra_comissao_id,
-            perfis_atuacao: v.perfis_atuacao || []
+            perfis_atuacao: v.perfis_atuacao || [],
+            contratado_em: v.contratado_em || null
         }));
         const { data: conviteRows } = await sb.from("convites_aluguel")
             .select("id, email, papel, percentual_comissao, token, expira_em")

@@ -1,0 +1,82 @@
+/* Gestão comercial da imobiliária: divisão do negócio (divisao.js) */
+.div-negocio{display:grid;gap:8px;margin-top:6px}
+.div-negocio-resumo,.div-resumo{display:grid;gap:4px;border:1px solid var(--line);border-radius:12px;padding:10px 12px;background:#fbfdfe}
+.div-negocio-resumo>div,.div-resumo>div{display:flex;justify-content:space-between;gap:12px;align-items:baseline;font-size:13px}
+.div-negocio-resumo span small{display:block;color:var(--muted);font-size:11.5px}
+.div-negocio-resumo strong,.div-resumo strong{white-space:nowrap;color:var(--navy-deep)}
+.div-imob{border-top:1px dashed var(--line);padding-top:6px;margin-top:2px}
+.div-imob strong{color:#247346}
+.div-dica{align-self:end;margin:0 0 8px;font-size:12px}
+.div-linhas{display:grid;gap:8px}
+.div-linha{display:grid;grid-template-columns:auto minmax(130px,1.5fr) 80px 66px minmax(120px,1fr) 100px auto;gap:8px;align-items:end;border:1px solid var(--line);border-radius:12px;padding:10px 12px;background:#fff}
+.div-linha label{display:grid;gap:3px;min-width:0}
+.div-linha label span{font-size:11.5px;color:var(--muted);font-weight:700}
+.div-linha input,.div-linha select{min-width:0;width:100%}
+.div-quem input{margin-top:4px}
+.div-tipo{align-self:center;background:var(--navy);color:#fff;border-radius:99px;font-size:11px;font-weight:800;padding:3px 9px}
+.div-tipo.parceiro{background:#c87a19}
+.div-valor{align-self:center;text-align:right;display:grid;font-size:14px}
+.div-valor small{font-size:11px;color:var(--muted)}
+.div-tirar{align-self:center;border:0;background:#f3f5f6;color:var(--muted);border-radius:8px;width:30px;height:30px;font-size:18px;cursor:pointer}
+.div-tirar:hover{background:#f7e8e6;color:#9a3b34}
+.div-linha:has(.div-tipo.parceiro){grid-template-columns:auto minmax(130px,1.5fr) 80px 100px auto}
+#divDialog .dialog-card{overflow-x:hidden}
+.div-add{display:flex;gap:8px;flex-wrap:wrap}
+.div-acoes{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+.div-erro{margin:0;color:#9a3b34;font-size:13px}
+.div-check{display:flex;gap:8px;align-items:center;font-size:13px}
+@media(max-width:760px){
+  .div-linha,.div-linha:has(.div-tipo.parceiro){grid-template-columns:1fr 1fr}
+  .div-linha .div-tipo{grid-column:1/-1;justify-self:start}
+  .div-linha .div-quem,.div-linha .div-base{grid-column:1/-1}
+  .div-valor{text-align:left}
+}
+
+/* Metas trimestrais (metas.js), no topo da página Comissões */
+.metas-painel{margin-bottom:14px}
+.metas-topo{flex-wrap:wrap}
+.metas-topo h2{margin:2px 0 0}
+.metas-acoes{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.metas-alvos{display:flex;flex-wrap:wrap;gap:6px 18px;align-items:baseline;margin:6px 0 10px;font-size:13.5px}
+.metas-alvos strong{color:var(--navy-deep)}
+.metas-tabela td{vertical-align:middle}
+.metas-barra{display:inline-block;width:110px;height:8px;border-radius:99px;background:#e6eef2;overflow:hidden;vertical-align:middle;margin-right:6px}
+.metas-barra i{display:block;height:100%;background:linear-gradient(90deg,#29abe2,#247346)}
+.metas-tabela td small{display:inline-block}
+.metas-tabela td small.muted-text{display:block}
+.metas-dica{font-size:12px;margin:8px 0 0}
+
+/* Financeiro da imobiliária (fin-gestao.js): comissões a receber, despesas e resultado */
+#finGestao{display:grid;gap:12px}
+#finGestao[hidden]{display:none}
+.fg-cards{grid-template-columns:repeat(auto-fit,minmax(170px,1fr))}
+.fg-natureza{display:flex;gap:16px;font-size:14px;font-weight:700}
+.fg-resultado-grade{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:12px}
+.fg-resultado-grade h3{margin:0 0 8px;font-size:15px;color:var(--navy-deep)}
+.fg-largo{grid-column:1/-1}
+.fg-lista{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+.fg-lista li{display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:13.5px;border-bottom:1px dashed var(--line);padding-bottom:5px}
+.fg-lista li strong{white-space:nowrap;color:var(--navy-deep)}
+.fg-lista li.fg-alerta strong{color:#a33a2f}
+.fg-barras{list-style:none;margin:0;padding:0;display:grid;gap:7px}
+.fg-barras li{display:grid;grid-template-columns:minmax(140px,1.2fr) 2fr auto;gap:10px;align-items:center;font-size:13px}
+.fg-barras li small{color:var(--muted)}
+.fg-barras i{display:block;height:10px;border-radius:99px;background:#e6eef2;overflow:hidden}
+.fg-barras b{display:block;height:100%;background:linear-gradient(90deg,#ff9b6b,#c8501f)}
+.fg-cad{display:grid;gap:8px}
+.fg-cad-linha{display:grid;grid-template-columns:2fr 1.4fr 110px auto auto;gap:8px;align-items:center}
+.fg-cad-linha.fg-cad-conta{grid-template-columns:1.6fr .8fr .9fr 1fr 140px auto auto}
+.fg-cad-linha input,.fg-cad-linha select{min-width:0;width:100%}
+.fg-negocio{display:grid;gap:6px;margin-top:10px;border-top:1px dashed var(--line);padding-top:10px}
+.fg-negocio .fg-lista li{font-size:13px}
+.fg-parc-gerar{align-items:end}
+.fg-parc{display:grid;gap:6px;margin:8px 0}
+.fg-parc-linha{display:grid;grid-template-columns:36px 150px 130px 1fr auto;gap:8px;align-items:center}
+.fg-parc-linha input{min-width:0;width:100%}
+@media(max-width:760px){
+  .fg-cad-linha,.fg-cad-linha.fg-cad-conta{grid-template-columns:1fr 1fr}
+  .fg-parc-linha{grid-template-columns:30px 1fr 1fr auto}
+  .fg-parc-linha [data-c="observacao"]{grid-column:2/4}
+  .fg-barras li{grid-template-columns:1fr auto}
+  .fg-barras i{grid-column:1/-1}
+}
