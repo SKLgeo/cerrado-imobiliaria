@@ -1540,8 +1540,9 @@
         const valor = numeroOuNulo($("areaInput").value);
         const unidade = $("areaUnidadeInput").value || "m2";
         const m2 = valor > 0 ? valor * window.SKLRural.fator(unidade) : 0;
-        // a mesma área em outras unidades só no rural (urbano é sempre m²)
-        $("areaConversao").textContent = m2 > 0 && zonaRuralNoForm() ? window.SKLRural.conversaoTexto(m2, unidade) : "";
+        // não lista todas as unidades juntas: no rural, trocar a unidade já converte o número; aqui só um lembrete em m²
+        $("areaConversao").textContent = m2 > 0 && zonaRuralNoForm() && unidade !== "m2"
+            ? `= ${m2.toLocaleString("pt-BR", { maximumFractionDigits: 4 })} m²` : "";
     }
 
     function definirPerimetro(geometria, nome) {
@@ -1694,8 +1695,6 @@
             c.rural && [ "🌾", "Imóvel rural", c.tipo_imovel || null ],
             c.lote && [ "🏷️", "Lote", "sem construção" ],
             [ "📐", areaTexto(c) || "—", c.lote ? "Área do lote" : c.rural ? "Área total" : categoria === "terreno" ? "Área do terreno" : "Área" ],
-            // rural: a mesma área nas outras unidades (ha, alqueires, m²), sem arredondar
-            c.rural && Number(c.area_m2) > 0 && [ "🔁", window.SKLRural.conversaoTexto(Number(c.area_m2), c.area_valor != null ? (c.area_unidade || "m2") : "m2").replace(/^= /, ""), "Em outras unidades" ],
             mostrar("salas") && [ "🚪", plural(c.salas, "sala", "salas"), c.tipo_imovel || null ],
             mostrar("quartos") && [ "🛏️", plural(c.quartos, "quarto", "quartos") + (Number(c.suites) > 0 ? ` (${plural(c.suites, "suíte", "suítes")})` : ""), c.tipo_imovel || null ],
             mostrar("banheiros") && [ "🚿", plural(c.banheiros, "banheiro", "banheiros"), null ],
@@ -1714,10 +1713,36 @@
         }
         if (c.rural) (c.benfeitorias || []).forEach(b => specs.push([ "🏗️", b.nome, b.detalhe || null ]));
         $("fichaSpecs").innerHTML = specs.map(([ icone, titulo, sub ]) => `<div class="unit-spec-item"><span class="unit-spec-icon">${icone}</span><div><strong>${h(titulo)}</strong>${sub ? `<small>${h(sub)}</small>` : ""}</div></div>`).join("");
+        if (c.rural && Number(c.area_m2) > 0) botaoVerAreaEm(c);
         const endereco = enderecoTexto(c);
         $("fichaEndereco").textContent = [ c.edificio, endereco ].filter(Boolean).join(" · ") || "Endereço não informado";
         $("fichaDescricao").textContent = c.descricao || "";
         $("fichaDescricao").hidden = !c.descricao;
+    }
+
+    // Rural: a ficha mostra só a área cadastrada; o botão "Ver em" troca a unidade mostrada (o cliente pergunta "quanto é em
+    // alqueire goiano?"). Só muda a tela, não o cadastro.
+    function botaoVerAreaEm(c) {
+        const chip = [ ...$("fichaSpecs").querySelectorAll(".unit-spec-item") ].find(el => el.querySelector(".unit-spec-icon")?.textContent === "📐");
+        if (!chip) return;
+        const forte = chip.querySelector("strong");
+        const cadastrada = c.area_valor != null && c.area_unidade && c.area_unidade !== "m2" ? c.area_unidade : "m2";
+        const U = window.SKLRural.UNIDADES;
+        const select = document.createElement("select");
+        select.className = "area-ver-em";
+        select.setAttribute("aria-label", "Ver a área em outra unidade");
+        select.innerHTML = Object.entries(U).map(([ k, u ]) => `<option value="${k}">${k === cadastrada ? `${h(u.sigla)} (cadastrada)` : h(u.sigla)}</option>`).join("");
+        select.value = cadastrada;
+        select.addEventListener("change", () => {
+            const u = select.value;
+            forte.textContent = u === cadastrada ? areaTexto(c)
+                : `${window.SKLRural.converter(Number(c.area_m2), "m2", u).toLocaleString("pt-BR", { maximumFractionDigits: 4 })} ${U[u].sigla}`;
+        });
+        const rotulo = document.createElement("label");
+        rotulo.className = "area-ver-em-rotulo";
+        rotulo.append("Ver em ", select);
+        chip.querySelector("div").append(rotulo);
+        chip.classList.add("com-ver-em");
     }
 
     function coletarDadosFormulario() {
