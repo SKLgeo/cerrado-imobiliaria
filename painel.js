@@ -7,7 +7,17 @@
     "use strict";
     const $ = id => document.getElementById(id);
     const h = v => String(v == null ? "" : v).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
-    const COR = { s1: "#0f9fa8", s2: "#e09a00", s3: "#6250d6" }; // validados (dataviz): verde-água, âmbar, violeta
+    // cores da marca do cliente (as mesmas do app: --navy = principal, --gold = destaque); s3 = a principal mais clara
+    const COR = { s1: "#003E67", s2: "#FF7433", s3: "#4F86B0" };
+    function hex(c) { const m = String(c || "").trim().match(/^#([0-9a-f]{6})$/i); return m ? "#" + m[1] : null; }
+    function clarear(c, t) { const n = parseInt(c.slice(1), 16), r = n >> 16, g = (n >> 8) & 255, b = n & 255, f = x => Math.round(x + (255 - x) * t).toString(16).padStart(2, "0"); return "#" + f(r) + f(g) + f(b); }
+    function coresDaMarca() {
+        const css = getComputedStyle(document.documentElement);
+        const p = hex(css.getPropertyValue("--navy")) || COR.s1, d = hex(css.getPropertyValue("--gold")) || COR.s2;
+        COR.s1 = p; COR.s2 = d; COR.s3 = clarear(p, 0.38);
+        const raiz = $("painelGestao");
+        raiz.style.setProperty("--pg-s1", COR.s1); raiz.style.setProperty("--pg-s2", COR.s2); raiz.style.setProperty("--pg-s3", COR.s3);
+    }
     const MESES = [ "jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez" ];
     let ctx = null, montado = false, periodo = "ano", filtro = "todos", ultimo = null, redesenhar = null;
 
@@ -46,7 +56,7 @@
         p.setAttribute("role", "dialog"); p.setAttribute("aria-label", "Painel da imobiliária");
         p.innerHTML = `<div class="pg-moldura">
             <nav class="pg-lateral" aria-label="Filtro do painel">
-              <span class="pg-marca" id="pgMarca">SKL</span>
+              <span class="pg-marca"><img src="logo-symbol.png" alt="" /></span>
               <button type="button" class="pg-ico ativo" data-pg-filtro="todos" title="Tudo">⌂<span>Tudo</span></button>
               <button type="button" class="pg-ico" data-pg-filtro="venda" title="Só vendas">🏷️<span>Vendas</span></button>
               <button type="button" class="pg-ico" data-pg-filtro="locacao" title="Só locações">🔑<span>Locação</span></button>
@@ -55,7 +65,7 @@
             </nav>
             <div class="pg-conteudo">
               <header class="pg-topo">
-                <div><span class="pg-sobre">PAINEL DA IMOBILIÁRIA</span><h1 id="pgTitulo">Visão geral</h1></div>
+                <div class="pg-titulo"><img id="pgLogo" class="pg-logo" alt="" hidden /><div><span class="pg-sobre">PAINEL DA IMOBILIÁRIA</span><h1 id="pgTitulo">Visão geral</h1></div></div>
                 <div class="pg-topo-acoes">
                   <select id="pgPeriodo" aria-label="Período">
                     <option value="mes">Este mês</option><option value="trimestre">Este trimestre</option>
@@ -84,9 +94,14 @@
         if (!pode()) return;
         $("painelGestao").hidden = false;
         document.documentElement.classList.add("pg-aberto");
-        const nome = (ctx.carteiraNome && ctx.carteiraNome()) || "";
-        $("pgMarca").textContent = nome ? nome.trim().split(/\s+/).slice(0, 2).map(p => p[0]).join("").toUpperCase() : "SKL";
+        coresDaMarca();
+        const nome = (window.SKL_MARCA && window.SKL_MARCA.nome) || (ctx.carteiraNome && ctx.carteiraNome()) || "";
         $("pgTitulo").textContent = nome || "Visão geral";
+        // logo do cliente no topo (a versão para fundo claro, quando o cliente tem)
+        const logo = $("pgLogo");
+        logo.onload = () => { logo.hidden = false; };
+        logo.onerror = () => { logo.hidden = true; };
+        if (!logo.getAttribute("src")) logo.src = "logo-fundo-claro.png";
         carregar();
     }
     function fechar() {
@@ -405,7 +420,7 @@
         if (!planos.length) { box.innerHTML = `<p class="pg-vazio">Nenhuma despesa paga no período.</p>`; return; }
         const total = planos.reduce((s, p) => s + Number(p.total), 0);
         const top = planos.slice(0, 4), resto = planos.slice(4).reduce((s, p) => s + Number(p.total), 0);
-        const partes = [ ...top.map((p, i) => ({ nome: p.nome, v: Number(p.total), cor: [ COR.s1, COR.s2, COR.s3, "#2a78d6" ][i] })), ...(resto > 0 ? [ { nome: "Outros", v: resto, cor: "#9aa6ab" } ] : []) ];
+        const partes = [ ...top.map((p, i) => ({ nome: p.nome, v: Number(p.total), cor: [ COR.s1, COR.s2, COR.s3, clarear(COR.s2, 0.45) ][i] })), ...(resto > 0 ? [ { nome: "Outros", v: resto, cor: "#9aa6ab" } ] : []) ];
         box.innerHTML = `<div class="pg-pilha">${partes.map(p => `<span style="width:${(p.v / total * 100).toFixed(2)}%;background:${p.cor}" data-parte="${h(p.nome)}"></span>`).join("")}</div>
           <ul class="pg-partes">${partes.map(p => `<li><i style="background:${p.cor}"></i><span>${h(p.nome)}</span><b>${h(dinheiro(p.v))}</b><small>${h(pct(p.v / total * 100))}</small></li>`).join("")}</ul>
           <p class="pg-nota">Total pago no período: <b>${h(dinheiro(total))}</b></p>`;
