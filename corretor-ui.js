@@ -6,7 +6,7 @@
     "use strict";
     const $ = id => document.getElementById(id);
     const CHAVE = "cerrado_imobiliaria_modo_corretor";
-    const CHAVE_FOCO = "skl_alug_modo_corretor_foco"; // Central vendo a tela de um corretor só
+    const CHAVE_FOCO = "cerrado_imobiliaria_modo_corretor_foco"; // Central vendo a tela de um corretor só
     // aba destacada para cada página
     const ABA = {
         hoje: "hoje", dashboard: "hoje", agenda: "hoje",
