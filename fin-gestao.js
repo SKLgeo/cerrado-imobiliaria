@@ -525,5 +525,5 @@
 
     function sair() { contas = []; plano = []; lancamentos = []; recebiveis = []; const b = $("finGestao"); if (b) b.innerHTML = ""; }
 
-    window.SKLFinGestao = { iniciar, sair, carregar, temAba, render, desenharNaNegociacao };
+    window.SKLFinGestao = { iniciar, sair, carregar, temAba, render, desenharNaNegociacao, dados: () => ({ contas, plano, lancamentos, recebiveis }) };
 })();
