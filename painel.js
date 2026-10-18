@@ -40,10 +40,27 @@
         if (!montado) { montar(); montado = true; }
         const b = $("painelAbrir");
         if (b) b.hidden = !pode();
+        const w = $("instaladorWindows");
+        if (w) w.hidden = !(pode() && podeBaixarWindows());
         if (!pode()) fechar();
+    }
+    // botão "Baixar programa para Windows": só para a Central, no navegador de um computador Windows
+    // (não dentro do próprio programa) e só se o cliente tiver programa (marca.instalador_windows, do json do cliente)
+    function podeBaixarWindows() {
+        const url = window.SKL_MARCA && window.SKL_MARCA.instalador_windows;
+        const ua = navigator.userAgent || "";
+        return !!url && /Windows NT/i.test(ua) && !/Electron/i.test(ua);
     }
     function montar() {
         const area = document.querySelector(".connection-area");
+        if (area && window.SKL_MARCA && window.SKL_MARCA.instalador_windows) {
+            const a = document.createElement("a");
+            a.id = "instaladorWindows"; a.className = "secondary-button"; a.hidden = true;
+            a.href = window.SKL_MARCA.instalador_windows; a.rel = "noopener";
+            a.textContent = "💻 Baixar programa para Windows";
+            a.title = "Instala o sistema no computador (abre direto, sem navegador, e se atualiza sozinho)";
+            area.insertBefore(a, area.firstChild);
+        }
         if (area) {
             const b = document.createElement("button");
             b.id = "painelAbrir"; b.type = "button"; b.className = "secondary-button"; b.textContent = "📊 Painel"; b.hidden = true;
