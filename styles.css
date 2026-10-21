@@ -352,6 +352,13 @@ dialog.foto-lightbox::backdrop{background:rgba(4,16,22,.92)}
 .area-ver-em-rotulo{display:flex;align-items:center;gap:6px;margin-top:4px;font-size:11px;color:var(--muted);white-space:nowrap}
 .area-ver-em{font:inherit;font-size:12px;padding:3px 6px;border:1px solid #cfdde6;border-radius:8px;background:#fff;color:var(--navy-deep);min-width:0}
 
+/* marca da SKL no rodapé da entrada (gerar.js) */
+.skl-selo{display:inline-flex;align-items:center;gap:6px;font-size:10px;letter-spacing:.06em;color:inherit;text-decoration:none;opacity:.75}
+.skl-selo:hover{opacity:1}
+.skl-selo img{display:block;height:22px;width:auto;border-radius:4px}
+.skl-selo-entrada{position:fixed;right:20px;bottom:16px;color:#e9dfcf}
+@media(max-width:780px){.skl-selo-entrada{right:auto;left:50%;transform:translateX(-50%);bottom:10px}}
+
 /* ===== tema de Cerrado Imobiliária (Web_Imobiliaria/gerar.js) ===== */
 :root{--navy:#003E67;--navy-deep:#00263F;--gold:#FF7433}
 .boot-view{background:linear-gradient(135deg,var(--navy),var(--navy-deep))}
