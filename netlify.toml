@@ -1,0 +1,4 @@
+# Netlify (link do cliente): publica a pasta como está e liga a prévia do imóvel no WhatsApp
+[build]
+  publish = "."
+  edge_functions = "netlify/edge-functions"
