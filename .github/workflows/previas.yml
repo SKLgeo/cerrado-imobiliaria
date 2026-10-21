@@ -1,0 +1,37 @@
+# Prévias do WhatsApp do link da imobiliária: a cada 5 minutos lê a vitrine e cria/atualiza i/<código>.html e .jpg
+# (imóvel novo ou 1ª foto trocada). Gerado por Web_Imobiliaria/gerar.js — não editar aqui.
+name: Prévias do WhatsApp
+on:
+  schedule:
+    - cron: "*/5 * * * *"
+  workflow_dispatch:
+permissions:
+  contents: write
+  pages: write
+concurrency:
+  group: previas
+  cancel-in-progress: false
+jobs:
+  previas:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Instalar o redimensionador de fotos
+        run: npm i --prefix "$RUNNER_TEMP/sharp" --no-save --no-package-lock --silent sharp@0.33.5
+      - name: Gerar as prévias
+        run: node .github/previas.mjs . .github/previas.json
+        env:
+          SHARP_PATH: ${{ runner.temp }}/sharp/node_modules/sharp
+      - name: Publicar se mudou
+        run: |
+          git add -A i 404.html
+          if git diff --cached --quiet; then echo "nada mudou"; exit 0; fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -q -m "Prévias do WhatsApp atualizadas"
+          git push -q
+          curl -s -o /dev/null -X POST -H "Authorization: Bearer ${{ github.token }}" -H "Accept: application/vnd.github+json" "https://api.github.com/repos/${{ github.repository }}/pages/builds" || true
