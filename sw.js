@@ -2,7 +2,7 @@
 // Rede primeiro (o corretor sempre vê a versão nova); sem internet, usa a última cópia guardada.
 // O nome do cache tem prefixo do cliente e a limpeza só apaga caches com esse prefixo.
 const CACHE_PREFIX = "cerrado-imobiliaria-imob-";
-const CACHE_NAME = CACHE_PREFIX + "0.14.8-mvucq9iq";
+const CACHE_NAME = CACHE_PREFIX + "0.14.9-mvudjx1f";
 const CORE_ASSETS = [ "./", "./index.html", "./styles.css", "./app.js", "./marca.js", "./logo.png", "./manifest.webmanifest",
   "./assets/icons/icon-192.png", "./assets/icons/icon-512.png", "./vendor/supabase/supabase.js" ];
 
