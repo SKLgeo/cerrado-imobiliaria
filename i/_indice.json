@@ -19,6 +19,10 @@
   "foto": "https://xigwlofqkmiibzbongkn.supabase.co/storage/v1/object/sign/fotos-construcoes/34d57f61-154f-4d54-ab97-b0748bcb8f57/3f127c63-cd88-4081-93af-78d6bfc57ed5/1793278523225_WhatsApp_Image_2026-10-28_at_17.00.19.jpg",
   "img": "mvtmdqiz"
  },
+ "00230": {
+  "foto": "https://xigwlofqkmiibzbongkn.supabase.co/storage/v1/object/sign/fotos-construcoes/34d57f61-154f-4d54-ab97-b0748bcb8f57/b73b9cb8-1983-402d-9db3-a102b48992ec/1793368426054_WhatsApp_Image_2026-10-30_at_09.17.19__2_.jpg",
+  "img": "mvv6diel"
+ },
  "00227": {
   "foto": "https://xigwlofqkmiibzbongkn.supabase.co/storage/v1/object/sign/fotos-construcoes/34d57f61-154f-4d54-ab97-b0748bcb8f57/7e6ff6e5-a10e-4c15-9c80-c47fa5dbe93a/1793215085590_WhatsApp_Image_2026-10-28_at_15.06.34.jpg",
   "img": "mvsmfl65"
@@ -54,10 +58,6 @@
  "00110": {
   "foto": "https://xigwlofqkmiibzbongkn.supabase.co/storage/v1/object/sign/fotos-construcoes/34d57f61-154f-4d54-ab97-b0748bcb8f57/bbfa19eb-dd1a-427e-b18b-7211bbb4159f/site_01.jpg",
   "img": "mvrao2wp"
- },
- "00106": {
-  "foto": "https://xigwlofqkmiibzbongkn.supabase.co/storage/v1/object/sign/fotos-construcoes/34d57f61-154f-4d54-ab97-b0748bcb8f57/302aef80-41b7-403f-8211-07affba9eb50/site_01.jpg",
-  "img": "mvrao3df"
  },
  "0060": {
   "foto": "https://xigwlofqkmiibzbongkn.supabase.co/storage/v1/object/sign/fotos-construcoes/34d57f61-154f-4d54-ab97-b0748bcb8f57/d869944b-557c-4b50-99d8-e2418cad7980/site_01.jpg",
@@ -446,6 +446,10 @@
  "0081": {
   "foto": "https://xigwlofqkmiibzbongkn.supabase.co/storage/v1/object/sign/fotos-construcoes/34d57f61-154f-4d54-ab97-b0748bcb8f57/f682aad2-c79d-4305-9350-44b7bec33832/site_01.jpg",
   "img": "mvrao3ff"
+ },
+ "00106": {
+  "foto": "https://xigwlofqkmiibzbongkn.supabase.co/storage/v1/object/sign/fotos-construcoes/34d57f61-154f-4d54-ab97-b0748bcb8f57/302aef80-41b7-403f-8211-07affba9eb50/site_01.jpg",
+  "img": "mvrao3df"
  },
  "00197": {
   "foto": "https://xigwlofqkmiibzbongkn.supabase.co/storage/v1/object/sign/fotos-construcoes/34d57f61-154f-4d54-ab97-b0748bcb8f57/0246c276-45f1-4c67-852e-51540cbde3e0/site_01.jpg",
