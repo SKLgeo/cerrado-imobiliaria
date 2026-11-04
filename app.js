@@ -58,7 +58,7 @@
     const MARCA = window.SKL_MARCA || {};
     const SUPABASE_URL = MARCA.supabase_url || "https://xigwlofqkmiibzbongkn.supabase.co";
     const SUPABASE_ANON_KEY = MARCA.supabase_anon_key || "sb_publishable_mqppAm9n79xl6rYafzXyNQ_mGVoX3Vd";
-    const APP_VERSION = "0.14.9";
+    const APP_VERSION = "0.17.0";
     const FOTOS_BUCKET = "fotos-construcoes";
     const CARTEIRA_ESCOLHIDA_KEY = "cerrado_imobiliaria_carteira_escolhida";
     const CENTRO_PADRAO = [ -15.793889, -47.882778 ];
@@ -79,6 +79,7 @@
     let realtimeChannel = null;
     let toastTimer = null;
     let mapaVisivel = false;
+    let mapaChaveAtual = "", soAreaDoMapa = false; // busca no mapa (ver "Mapa (lista)")
 
     let map = null;
     let markersById = new Map();
@@ -107,6 +108,8 @@
     let fotosExistentes = [];
     let fotosNovas = [];
     let fotosRemovidas = [];
+    let capaNova = null;          // índice de uma foto nova escolhida como capa (ainda não enviada)
+    let aprovaSemEditar = false;  // quem só aprova (sem editar imóveis) aprova direto, sem salvar o formulário
     let heroIndex = 0;
     const signedUrlCache = new Map();
 
@@ -213,7 +216,8 @@
         [ "interesseBusca", "interesseTipoFiltro", "interesseSituacaoFiltro" ].forEach(id => $(id).addEventListener(id === "interesseBusca" ? "input" : "change", renderInteresses));
         $("saveConstrucaoButton").addEventListener("click", () => salvarImovel());
         $("enviarCadastroButton").addEventListener("click", () => salvarImovel({ enviar: true }));
-        $("aprovarCadastroButton").addEventListener("click", () => salvarImovel({ aprovar: true }));
+        $("aprovarCadastroButton").addEventListener("click", () => aprovaSemEditar ? aprovarSemEditar() : salvarImovel({ aprovar: true }));
+        $("contaIrPainel").addEventListener("click", () => { const b = $("painelAbrir"); if (b) b.click(); });
         $("recusarCadastroButton").addEventListener("click", abrirRecusarCadastro);
         $("confirmRecusarButton").addEventListener("click", confirmarRecusarCadastro);
         $("salvarNotaMinimaButton").addEventListener("click", salvarNotaMinima);
@@ -410,6 +414,10 @@
     }
     function podeGerenciar() {
         return !!currentUser && [ "administrador", "central_vendas" ].includes(currentUser.papel);
+    }
+    // Permissão do tipo de acesso (Configurações → "O que cada tipo de acesso pode fazer"). O banco confere de novo.
+    function pode(chave) {
+        return !!currentUser && (window.SKLPermissoes ? window.SKLPermissoes.vale(chave, currentUser.papel) : podeGerenciar());
     }
     // Gestor e financeiro enxergam a carteira inteira (imóveis alugados/vendidos, equipe, indicadores), mas não configuram nada.
     function veTudo() {
@@ -891,6 +899,7 @@
             usuario: () => currentUser,
             central: () => veTudo(),
             gestao: () => gestaoCrm(),
+            pode,
             papel: () => currentUser && currentUser.papel,
             imoveis: () => [ ...construcoes.values() ],
             equipe: () => corretores,
@@ -903,7 +912,7 @@
     // Tela do corretor (corretor-ui.js): mesma base, apresentação para o celular, escolhida pelo papel.
     function contextoTela() {
         return {
-            h, toast, showPage, logout, trocarCarteira, precoCurto, preencherFotoCapa,
+            h, toast, showPage, logout, trocarCarteira, precoCurto, preencherFotoCapa, pode,
             usuario: () => currentUser,
             central: () => veTudo(),
             gestao: () => gestaoCrm(),
@@ -925,7 +934,8 @@
             sb, h, toast, traduzErro, parseValor,
             carteiraId: () => carteiraId,
             usuario: () => currentUser,
-            podeGerir: () => !!currentUser && [ "administrador", "central_vendas", "financeiro" ].includes(currentUser.papel),
+            pode,
+            podeGerir: () => pode("gerir_financeiro"),
             equipe: () => corretores,
             imoveis: () => [ ...construcoes.values() ],
             tiposImovel: () => [ ...TIPOS_URBANOS, ...TIPOS_RURAIS ],
@@ -942,7 +952,8 @@
             carteiraNome: () => carteiraNomeAtual || "",
             usuario: () => currentUser,
             veTudo: () => veTudo(),
-            podeGerir: () => !!currentUser && [ "administrador", "central_vendas", "financeiro" ].includes(currentUser.papel),
+            pode,
+            podeGerir: () => pode("gerir_financeiro"),
             imoveis: () => [ ...construcoes.values() ],
             equipe: () => corretores,
             recarregarImoveis: () => loadConstrucoes(true),
@@ -960,7 +971,8 @@
             papel: () => currentUser && currentUser.papel,
             veTudo: () => veTudo(),
             gestao: () => gestaoCrm(),
-            podeGerir: () => !!currentUser && [ "administrador", "central_vendas", "financeiro" ].includes(currentUser.papel),
+            pode,
+            podeGerir: () => pode("gerir_financeiro"),
             imoveis: () => [ ...construcoes.values() ],
             equipe: () => corretores
         };
@@ -971,25 +983,34 @@
         $("appView").hidden = false;
         $("currentUserName").textContent = currentUser.display_name;
         iniciarFotoPerfil();
+        if (window.SKLPermissoes) await window.SKLPermissoes.carregar(sb, carteiraId);
         $("currentUserRole").textContent = ROLE[currentUser.papel] || currentUser.papel;
         const gerencia = podeGerenciar();
-        $("newConstrucaoButton").hidden = !gerencia;
-        $("navInteresses").hidden = !gerencia;
-        $("navCorretores").hidden = !gerencia;
-        const financeiro = currentUser.papel === "financeiro";
-        $("navComissoes").hidden = !(gerencia || financeiro);
-        // gestor e financeiro não aprovam cadastros de imóveis; o financeiro não usa o CRM (só os indicadores)
-        $("navCadastros").hidden = veTudo() && !gerencia;
-        [ "negociacoes", "agenda", "clientes" ].forEach(p => { document.querySelector(`#mainNav [data-page="${p}"]`).hidden = financeiro; });
-        $("navCadastrosTexto").textContent = gerencia ? "Cadastros" : "Meus cadastros";
-        $("cadastrosFiltro").hidden = !gerencia;
+        // corretor também cadastra daqui (vai para "Meus cadastros" e a Central aprova); antes o botão ficava só em Conta
+        $("newConstrucaoButton").hidden = !(gerencia || currentUser.papel === "corretor");
+        $("newConstrucaoButton").textContent = gerencia ? "Novo imóvel" : "+ Cadastrar imóvel";
+        // o que aparece no menu segue as permissões do tipo de acesso (padrão: como sempre foi)
+        $("navInteresses").hidden = !pode("tela_interesses");
+        $("navCorretores").hidden = !pode("tela_equipe");
+        $("navComissoes").hidden = !pode("tela_comissoes");
+        const aprovador = pode("aprovar_cadastros");
+        $("navCadastros").hidden = !(aprovador || gerencia || currentUser.papel === "corretor");
+        [ "negociacoes", "agenda", "clientes" ].forEach(p => { document.querySelector(`#mainNav [data-page="${p}"]`).hidden = !pode("tela_crm"); });
+        document.querySelector('#mainNav [data-page="indicadores"]').hidden = !pode("tela_indicadores");
+        [ [ "contaIrFinanceiro", "ver_financeiro" ], [ "contaIrEquipe", "tela_equipe" ], [ "contaIrInteresses", "tela_interesses" ], [ "contaIrPainel", "tela_painel" ] ]
+            .forEach(([ id, chave ]) => { const b = $(id); if (b) b.hidden = !pode(chave); });
+        const bInd = document.querySelector('#page-conta [data-go="indicadores"]');
+        if (bInd) bInd.hidden = !pode("tela_indicadores");
+        $("navCadastrosTexto").textContent = aprovador ? "Cadastros" : "Meus cadastros";
+        $("cadastrosFiltro").hidden = !aprovador;
+        $("cadastrosFiltroMeus").hidden = gerencia;
         $("novoCadastroButton").hidden = gerencia;
         $("cadastrosIntro").textContent = gerencia
             ? "Imóveis cadastrados pelos corretores. Revise, corrija o que precisar e aprove para o imóvel aparecer para toda a equipe."
             : "Cadastre imóveis para venda ou aluguel. A Central revisa e, depois de aprovado, o imóvel aparece para todos os corretores.";
         $("settingsCadastroPanel").hidden = !gerencia;
         document.querySelectorAll("[data-so-central]").forEach(el => { el.hidden = !veTudo(); });
-        document.querySelectorAll("[data-so-config]").forEach(el => { el.hidden = !gerencia; });
+        document.querySelectorAll("[data-so-config]").forEach(el => { el.hidden = !(gerencia && pode("configurar")); });
         document.querySelectorAll("[data-gestao]").forEach(el => { el.hidden = !gestaoCrm(); });
         $("dashboardCarteiraNome").textContent = carteiraNomeAtual;
         $("settingsCarteiraNome").textContent = carteiraNomeAtual;
@@ -1002,16 +1023,20 @@
         if (window.SKLComissoes) await seguro("comissões", () => window.SKLComissoes.iniciar(contextoComissoes()));
         if (window.SKLDivisao) await seguro("divisão do negócio", () => window.SKLDivisao.iniciar(contextoComissoes()));
         if (window.SKLMetas) await seguro("metas", () => window.SKLMetas.iniciar(contextoComissoes()));
-        if (veTudo()) await loadCorretores();
+        if (veTudo() || pode("tela_equipe") || pode("aprovar_cadastros")) await loadCorretores();
         await loadConstrucoes();
-        if (gerencia) await loadInteresses();
+        if (pode("tela_interesses")) await loadInteresses();
+        if (window.SKLPermissoes) window.SKLPermissoes.painel(contextoExtras());
         if (window.SKLComissoes) window.SKLComissoes.renderRegras();
         await loadComissoesAluguel();
         connectRealtime();
         if (window.SKLCRM) await seguro("CRM", () => window.SKLCRM.iniciar(contextoCrm()));
+        if (window.SKLFuncoes) await seguro("funções da imobiliária", () => window.SKLFuncoes.iniciar(contextoExtras()));
         if (window.SKLFinanceiro) await seguro("financeiro", () => window.SKLFinanceiro.iniciar(contextoFinanceiro()));
         if (window.SKLPainel) await seguro("painel", () => window.SKLPainel.iniciar({ ...contextoFinanceiro(), showPage }));
         if (window.SKLFiscal) await seguro("fiscal", () => window.SKLFiscal.iniciar(contextoFinanceiro()));
+        if (window.SKLConciliacao) await seguro("extrato do banco", () => window.SKLConciliacao.iniciar(contextoFinanceiro()));
+        if (window.SKLContabil) await seguro("contabilidade", () => window.SKLContabil.iniciar(contextoFinanceiro()));
         const ctxExtras = contextoExtras();
         if (window.SKLAvisos) await seguro("avisos", () => window.SKLAvisos.iniciar({ ...ctxExtras, irPara: showPage,
             abrirImovel: id => { const c = construcoes.get(id); if (c) openConstrucaoDialog(c); else toast("Este imóvel não está mais na lista (pode ter sido vendido ou alugado)."); } }));
@@ -1020,6 +1045,8 @@
         if (window.SKLIntegracoes) await seguro("integrações", () => window.SKLIntegracoes.iniciar(ctxExtras));
         if (window.SKLDocumentos) await seguro("documentos", () => window.SKLDocumentos.iniciar(ctxExtras));
         if (window.SKLExtras) await seguro("extras", () => window.SKLExtras.iniciar(ctxExtras));
+        if (window.SKLPortalCliente) await seguro("portal do cliente", () => window.SKLPortalCliente.iniciar(ctxExtras));
+        if (window.SKLAgendaCelular) await seguro("agenda no celular", () => window.SKLAgendaCelular.iniciar(ctxExtras));
         showPage(window.SKLModoCorretor ? window.SKLModoCorretor.iniciar(contextoTela()) : "dashboard");
     }
 
@@ -1030,6 +1057,8 @@
         if (window.SKLMetas) window.SKLMetas.sair();
         if (window.SKLPainel) window.SKLPainel.sair();
         if (window.SKLFiscal) window.SKLFiscal.sair();
+        if (window.SKLConciliacao) window.SKLConciliacao.sair();
+        if (window.SKLContabil) window.SKLContabil.sair();
         if (window.SKLModoCorretor) window.SKLModoCorretor.sair();
         if (window.SKLAvisos) window.SKLAvisos.sair();
         // "scope: local": sai só deste aparelho; o celular e o computador da mesma pessoa continuam conectados
@@ -1551,9 +1580,12 @@
         renderChipsBairro();
         const rurais = baseBusca().filter(c => c.rural).length;
         $("zonaRuralQtd").textContent = rurais ? ` (${rurais})` : "";
-        const rows = filteredConstrucoes();
+        const todos = filteredConstrucoes();
+        const soArea = mapaVisivel && soAreaDoMapa && !!map;
+        const rows = soArea ? todos.filter(noMapa) : todos;
         const gerencia = podeGerenciar();
-        $("buscaResultado").textContent = rows.length === 1 ? "1 imóvel encontrado" : `${rows.length} imóveis encontrados`;
+        $("buscaResultado").textContent = soArea ? `${rows.length} de ${todos.length} imóveis nesta área do mapa`
+            : rows.length === 1 ? "1 imóvel encontrado" : `${rows.length} imóveis encontrados`;
         $("construcaoGridEmpty").hidden = rows.length > 0;
         $("construcaoGrid").innerHTML = rows.map(c => {
             const q = gerencia ? qualidadeImovel(c) : null;
@@ -1572,7 +1604,7 @@
         }).join("");
         $("construcaoGrid").querySelectorAll("[data-id]").forEach(card => card.addEventListener("click", () => openConstrucaoDialog(construcoes.get(card.dataset.id))));
         rows.forEach(c => preencherFotoCapa(c, `[data-foto-holder="${CSS.escape(c.id)}"]`));
-        if (mapaVisivel) { ensureMap(); renderMapMarkers(rows); }
+        if (mapaVisivel) { ensureMap(); renderMapMarkers(todos); }
     }
 
     // ===== Cadastros feitos pelos corretores (aprovação da Central) =====
@@ -1585,7 +1617,9 @@
 
     function renderCadastros() {
         if (!currentUser) return;
-        const gerencia = podeGerenciar();
+        // quem aprova cadastros (Central, ou outro tipo com a permissão) vê a fila de todos; os outros, só os próprios
+        let gerencia = pode("aprovar_cadastros");
+        if (gerencia && $("cadastrosFiltro").value === "meus") gerencia = false;
         let lista;
         if (gerencia) {
             const filtro = $("cadastrosFiltro").value || "pendente";
@@ -1635,6 +1669,22 @@
         lista.forEach(c => preencherFotoCapa(c, `[data-cadastro-foto="${CSS.escape(c.id)}"]`));
     }
 
+    // quem tem só "Aprovar cadastros" (sem editar imóveis) aprova como está, sem gravar o formulário
+    async function aprovarSemEditar() {
+        const b = $("aprovarCadastroButton");
+        b.disabled = true;
+        try {
+            const { data, error } = await sb.rpc("revisar_cadastro_imovel", { p_id: editandoId, p_aprovar: true });
+            if (error) throw error;
+            construcoes.set(data.id, data);
+            atualizarTudo();
+            $("construcaoDialog").close();
+            toast("Cadastro aprovado. O imóvel já aparece para todos.");
+        } catch (error) {
+            showMessage($("construcaoDialogMessage"), traduzErro(error.message));
+        } finally { b.disabled = false; }
+    }
+
     function abrirRecusarCadastro() {
         $("recusarMotivoInput").value = "";
         $("recusarMessage").hidden = true;
@@ -1671,21 +1721,50 @@
 
     // ===== Mapa (lista) =====
 
+    // Busca no mapa: cada imóvel é uma bolinha na cor da situação (com o nome ao passar o mouse); tocar abre um cartão com foto e "Abrir ficha".
+    // "Só os imóveis desta área" faz a lista mostrar apenas o que está visível no mapa (muda ao arrastar ou ampliar).
+    // Em tela larga o mapa fica ao lado da lista (classe .com-mapa na página).
     function toggleConstrucaoView() {
         mapaVisivel = !mapaVisivel;
         $("construcaoMapPanel").hidden = !mapaVisivel;
-        if (mapaVisivel) {
-            setTimeout(() => { ensureMap(); map && map.invalidateSize(); renderMapMarkers(filteredConstrucoes()); }, 60);
-        }
+        $("page-construcoes").classList.toggle("com-mapa", mapaVisivel);
+        $("toggleConstrucaoViewButton").textContent = mapaVisivel ? "☰ Só a lista" : "🗺️ Ver no mapa";
+        mapaChaveAtual = "";
+        if (mapaVisivel) setTimeout(() => { ensureMap(); map && map.invalidateSize(); renderConstrucoes(); }, 60);
+        else renderConstrucoes();
     }
 
     function ensureMap() {
         if (map) return;
         map = L.map("construcaoMap", { zoomControl: true });
-        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        const ruas = L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
             maxZoom: 20, attribution: "© OpenStreetMap"
         }).addTo(map);
+        const satelite = L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", {
+            maxZoom: 20, maxNativeZoom: 19, attribution: "Imagens © Esri"
+        });
+        L.control.layers({ "Mapa": ruas, "Satélite": satelite }, null, { position: "topright" }).addTo(map);
+        const Area = L.Control.extend({
+            onAdd() {
+                const box = L.DomUtil.create("label", "mapa-so-area");
+                box.innerHTML = `<input type="checkbox" /> Listar só o que está no mapa`;
+                L.DomEvent.disableClickPropagation(box);
+                box.querySelector("input").addEventListener("change", ev => { soAreaDoMapa = ev.target.checked; renderConstrucoes(); });
+                return box;
+            }
+        });
+        new Area({ position: "topleft" }).addTo(map);
+        let espera = null;
+        map.on("moveend", () => {
+            if (!soAreaDoMapa) return;
+            clearTimeout(espera);
+            espera = setTimeout(renderConstrucoes, 150);
+        });
         map.setView(CENTRO_PADRAO, 4);
+    }
+
+    function noMapa(c) {
+        return !!map && c.latitude != null && c.longitude != null && map.getBounds().contains([ c.latitude, c.longitude ]);
     }
 
     function statusDivIcon(status) {
@@ -1696,9 +1775,30 @@
             iconAnchor: [ 9, 9 ]
         });
     }
+    function cartaoDoPino(c) {
+        const specs = specsResumo(c);
+        return `<div class="pino-card">
+          <div class="pino-foto" data-pino-foto="${h(c.id)}">${(c.fotos || []).length ? "" : `<span>Sem foto</span>`}</div>
+          <div class="pino-corpo">
+            <small>${h([ c.codigo ? "Cód. " + c.codigo : "", finalidadeTexto(c) ].filter(Boolean).join(" · "))}</small>
+            <strong>${h(c.nome)}</strong>
+            <span>${h([ c.bairro, c.cidade ].filter(Boolean).join(" · "))}</span>
+            ${specs ? `<span class="pino-specs">${specs}</span>` : ""}
+            <span class="pino-valor">${precoCard(c)}</span>
+            <button type="button" class="primary-button" data-pino-abrir="${h(c.id)}">Abrir ficha</button>
+          </div></div>`;
+    }
 
     function renderMapMarkers(rows) {
         if (!map) return;
+        const comLocal = rows.filter(c => c.latitude != null && c.longitude != null);
+        const semLocal = rows.length - comLocal.length;
+        $("mapSemLocal").hidden = !semLocal;
+        $("mapSemLocal").textContent = semLocal === 1 ? "1 imóvel da busca sem localização (só na lista)" : `${semLocal} imóveis da busca sem localização (só na lista)`;
+        // mesma busca e mesma finalidade: não redesenha nem muda o enquadramento (senão arrastar o mapa voltaria ao início)
+        const chave = finalidadeFiltro + "|" + rows.map(c => c.id + ":" + c.status).join(",");
+        if (chave === mapaChaveAtual) return;
+        mapaChaveAtual = chave;
         markersById.forEach(marker => map.removeLayer(marker));
         markersById.clear();
         perimetrosNoMapa.forEach(camada => map.removeLayer(camada));
@@ -1707,13 +1807,21 @@
         rows.forEach(c => {
             if (c.perimetro && window.SKLRural) perimetrosNoMapa.push(window.SKLRural.camada(L, c.perimetro, { weight: 2 }).addTo(map));
             if (c.latitude == null || c.longitude == null) return;
-            const marker = L.marker([ c.latitude, c.longitude ], { icon: statusDivIcon(c.status) }).addTo(map);
+            const marker = L.marker([ c.latitude, c.longitude ], { icon: statusDivIcon(c.status), riseOnHover: true }).addTo(map);
             marker.bindTooltip(c.nome);
-            marker.on("click", () => openConstrucaoDialog(c));
+            marker.bindPopup(() => cartaoDoPino(c), { maxWidth: 280, minWidth: 240, className: "pino-popup" });
+            marker.on("popupopen", ev => {
+                const el = ev.popup.getElement();
+                el.querySelector("[data-pino-abrir]")?.addEventListener("click", () => { map.closePopup(); openConstrucaoDialog(construcoes.get(c.id) || c); });
+                fotosCapa([ c ]).then(m => {
+                    const url = m.get(c.id), foto = el.querySelector("[data-pino-foto]");
+                    if (url && foto) { foto.style.backgroundImage = `url("${url}")`; foto.textContent = ""; }
+                });
+            });
             markersById.set(c.id, marker);
             pontos.push([ c.latitude, c.longitude ]);
         });
-        if (pontos.length) map.fitBounds(pontos, { padding: [ 30, 30 ], maxZoom: 15 });
+        if (pontos.length && !soAreaDoMapa) map.fitBounds(pontos, { padding: [ 40, 40 ], maxZoom: 15 });
     }
 
     // ===== Diálogo do imóvel =====
@@ -1728,12 +1836,16 @@
         fotosNovas = [];
         fotosRemovidas = [];
         heroIndex = 0;
-        const gerencia = podeGerenciar();
+        // editar imóvel já cadastrado segue a permissão "Editar imóveis aprovados"; cadastro aguardando aprovação, a de "Aprovar cadastros"
+        const aprovador = !!construcao && construcao.aprovacao === "pendente" && pode("aprovar_cadastros");
+        const gerencia = podeGerenciar() && (!construcao || pode("editar_imoveis") || aprovador);
         const meuEditavel = !!construcao && construcao.cadastrado_por === currentUser.id
             && [ "rascunho", "pendente", "recusado" ].includes(construcao.aprovacao);
         centralTravada = gerencia && !!construcao && construcao.aprovacao !== "pendente" && !opcoes.destravar;
         modoDialogo = gerencia ? (centralTravada ? "leitura" : "central") : (!construcao || meuEditavel ? "corretor" : "leitura");
         const leitura = modoDialogo === "leitura";
+        aprovaSemEditar = aprovador && leitura;
+        capaNova = null;
 
         $("construcaoDialogMessage").hidden = true;
         $("construcaoDialogEyebrow").textContent = construcao
@@ -1820,14 +1932,14 @@
         const pendente = construcao?.aprovacao === "pendente";
         $("deleteConstrucaoButton").hidden = !construcao || leitura;
         $("deleteConstrucaoButton").textContent = gerencia ? "Excluir" : "Excluir cadastro";
-        $("recusarCadastroButton").hidden = !(gerencia && pendente);
-        $("aprovarCadastroButton").hidden = !(gerencia && pendente);
+        $("recusarCadastroButton").hidden = !(pendente && pode("aprovar_cadastros"));
+        $("aprovarCadastroButton").hidden = !(pendente && pode("aprovar_cadastros"));
         $("saveConstrucaoButton").hidden = leitura;
         $("saveConstrucaoButton").textContent = gerencia ? (pendente ? "Salvar correções" : "Salvar imóvel") : "Salvar rascunho";
         $("saveConstrucaoButton").className = gerencia && !pendente ? "primary-button" : "secondary-button";
         $("enviarCadastroButton").hidden = modoDialogo !== "corretor";
         $("enviarCadastroButton").textContent = construcao?.aprovacao === "pendente" ? "Salvar e manter na fila" : "Enviar para aprovação";
-        $("registrarInteresseButton").hidden = !leitura || centralTravada;
+        $("registrarInteresseButton").hidden = !leitura || centralTravada || pendente;
         $("destravarEdicaoButton").hidden = !centralTravada;
         $("travaEdicaoBarra").hidden = !centralTravada;
 
@@ -2394,10 +2506,38 @@
     }
 
     function obterItensFotos() {
-        return [
-            ...fotosExistentes.map(f => ({ tipo: "existente", path: f.path })),
+        const itens = [
+            ...fotosExistentes.map((f, index) => ({ tipo: "existente", index, path: f.path })),
             ...fotosNovas.map((f, index) => ({ tipo: "nova", index, previewUrl: f.previewUrl }))
         ];
+        // foto nova escolhida como capa vai para a frente (é enviada primeiro ao salvar)
+        if (capaNova != null) {
+            const i = itens.findIndex(x => x.tipo === "nova" && x.index === capaNova);
+            if (i > 0) itens.unshift(itens.splice(i, 1)[0]);
+        }
+        return itens;
+    }
+    // a 1ª foto é a capa (busca, site, WhatsApp)
+    function usarComoCapa(pos) {
+        const item = obterItensFotos()[pos];
+        if (!item || pos === 0) return;
+        if (item.tipo === "existente") { fotosExistentes.unshift(fotosExistentes.splice(item.index, 1)[0]); capaNova = null; }
+        else capaNova = item.index;
+        heroIndex = 0;
+        renderGaleria();
+        toast("Foto escolhida como capa. Toque em Salvar para gravar.");
+    }
+    function tirarFoto(pos) {
+        const item = obterItensFotos()[pos];
+        if (!item) return;
+        if (item.tipo === "existente") { fotosRemovidas.push(item.path); fotosExistentes.splice(item.index, 1); }
+        else {
+            fotosNovas.splice(item.index, 1);
+            if (capaNova === item.index) capaNova = null;
+            else if (capaNova != null && capaNova > item.index) capaNova--;
+        }
+        if (heroIndex >= pos && heroIndex > 0) heroIndex--;
+        renderGaleria();
     }
 
     function resolveUrlItem(item) {
@@ -2418,19 +2558,21 @@
         grid.querySelectorAll("[data-remove-foto]").forEach(button => {
             button.addEventListener("click", event => {
                 event.stopPropagation();
-                const idx = Number(button.dataset.removeFoto);
-                const item = itens[idx];
-                if (item.tipo === "existente") {
-                    // remove só esta posição (a mesma foto pode aparecer repetida na galeria)
-                    fotosRemovidas.push(item.path);
-                    fotosExistentes.splice(idx, 1);
-                } else {
-                    fotosNovas.splice(item.index, 1);
-                }
-                if (heroIndex >= idx && heroIndex > 0) heroIndex--;
-                renderGaleria();
+                tirarFoto(Number(button.dataset.removeFoto));
             });
         });
+        // ações da foto que está grande: "Usar como capa" e "Tirar esta foto"
+        let acoes = $("heroFotoAcoes");
+        if (!acoes) {
+            acoes = document.createElement("div");
+            acoes.id = "heroFotoAcoes"; acoes.className = "hero-foto-acoes";
+            acoes.innerHTML = `<button type="button" class="secondary-button" id="heroCapaBtn">★ Usar como capa</button>
+              <button type="button" class="secondary-button" id="heroTirarBtn">🗑 Tirar esta foto</button><small id="heroCapaInfo"></small>`;
+            (grid.closest(".imovel-hero-toolbar") || grid).insertAdjacentElement("afterend", acoes);
+            $("heroCapaBtn").addEventListener("click", () => usarComoCapa(heroIndex));
+            $("heroTirarBtn").addEventListener("click", () => tirarFoto(heroIndex));
+        }
+        acoes.hidden = !podeEditar || !itens.length;
         mostrarHero(heroIndex);
         atualizarQualidade();
     }
@@ -2455,6 +2597,10 @@
         img.hidden = !url;
         empty.hidden = !!url;
         contador.textContent = `${heroIndex + 1}/${itens.length}`;
+        if ($("heroCapaBtn")) {
+            $("heroCapaBtn").disabled = heroIndex === 0;
+            $("heroCapaInfo").textContent = heroIndex === 0 ? "Esta é a foto de capa." : "";
+        }
         $("construcaoFotosGrid").querySelectorAll(".foto-thumb").forEach((el, i) => el.classList.toggle("selecionada", i === heroIndex));
     }
 
@@ -2557,7 +2703,8 @@
                 const atual = construcoes.get(editandoId);
                 await removerFotosMarcadas();
                 const novasEnviadas = await uploadFotosNovas(editandoId);
-                dados.fotos = [ ...fotosExistentes, ...novasEnviadas ];
+                const capaEnviada = capaNova != null ? novasEnviadas.splice(capaNova, 1) : [];
+                dados.fotos = [ ...capaEnviada, ...fotosExistentes, ...novasEnviadas ];
                 const { data, error } = await sb.rpc("salvar_imovel", {
                     p_carteira_id: carteiraId, p_dados: dados, p_id: editandoId, p_expected_version: atual?.version ?? null
                 });

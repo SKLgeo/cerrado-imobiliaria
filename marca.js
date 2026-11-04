@@ -4,6 +4,7 @@ window.SKL_MARCA = {
   "link": "https://sistema.cerradoimobiliaria.com.br/",
   "carteira_id": "34d57f61-154f-4d54-ab97-b0748bcb8f57",
   "pagina_imovel": "https://sistema.cerradoimobiliaria.com.br/imovel.html",
+  "pagina_portal": "https://sistema.cerradoimobiliaria.com.br/portal.html",
   "previas": true,
   "instalador_windows": "https://github.com/SKLgeo/cerrado-imobiliaria-updates/releases/latest/download/Cerrado-Imobiliaria-Instalador.exe",
   "marca_dagua": {

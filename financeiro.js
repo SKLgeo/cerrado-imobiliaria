@@ -69,7 +69,7 @@
     function iniciar(contexto) {
         ctx = contexto;
         if (!ligado) { ligarEventos(); ligado = true; }
-        const ve = ctx.veTudo();
+        const ve = ctx.pode ? ctx.pode("ver_financeiro") : ctx.veTudo();
         $("navFinanceiro").hidden = !ve;
         document.querySelectorAll("[data-fin-gerir]").forEach(el => { el.hidden = !podeGerir(); });
         contratos = []; vendas = []; cobrancas = []; repasses = []; clientes = new Map(); resumo = null;
@@ -202,7 +202,7 @@
         const f = FILTROS[aba] || (window.SKLFinExtra && window.SKLFinExtra.filtros[aba]);
         $("finFiltro").hidden = !f;
         if (f) $("finFiltro").innerHTML = Object.entries(f).map(([ v, t ]) => `<option value="${v}">${h(t)}</option>`).join("");
-        $("finBusca").hidden = aba === "resumo" || !!(window.SKLFinGestao && window.SKLFinGestao.temAba(aba));
+        $("finBusca").hidden = aba === "resumo" || aba === "extrato" || aba === "contabil" || !!(window.SKLFinGestao && window.SKLFinGestao.temAba(aba));
         $("finBusca").value = "";
         render();
     }
@@ -212,7 +212,9 @@
         // Comissões a receber, Despesas e Resultado ficam em fin-gestao.js
         const gestao = !!(window.SKLFinGestao && window.SKLFinGestao.temAba(aba));
         const fiscal = !!(window.SKLFiscal && window.SKLFiscal.temAba(aba)); // Fiscal · DIMOB fica em fiscal.js
-        const extra = !!(window.SKLFinExtra && window.SKLFinExtra.temAba(aba)) || gestao || fiscal;
+        const conc = !!(window.SKLConciliacao && window.SKLConciliacao.temAba(aba)); // Extrato do banco fica em conciliacao.js
+        const contabil = !!(window.SKLContabil && window.SKLContabil.temAba(aba)); // Contabilidade fica em contabil.js
+        const extra = !!(window.SKLFinExtra && window.SKLFinExtra.temAba(aba)) || gestao || fiscal || conc || contabil;
         $("finResumo").hidden = aba !== "resumo";
         $("finLista").hidden = aba === "resumo" || extra;
         $("finMes").hidden = aba === "contratos" || extra;
@@ -220,6 +222,8 @@
         if (window.SKLFinExtra) window.SKLFinExtra.render(aba);
         if (window.SKLFinGestao) window.SKLFinGestao.render(aba);
         if (window.SKLFiscal) window.SKLFiscal.render(aba);
+        if (window.SKLConciliacao) window.SKLConciliacao.render(aba);
+        if (window.SKLContabil) window.SKLContabil.render(aba);
         if (gestao) $("finContagem").textContent = "";
         if (extra) return;
         if (aba === "resumo") return renderResumo();
@@ -243,7 +247,7 @@
             ${card("A receber no mês", r.a_receber_mes, "vencimentos do mês")}
             ${card("Recebido no mês", r.recebido_mes, "pagamentos registrados")}
             ${card("Em atraso", r.em_atraso_valor, `${r.em_atraso_qtd || 0} cobrança(s)`, (r.em_atraso_qtd || 0) > 0)}
-            ${card("A repassar", r.a_repassar, "aos proprietários")}
+            ${window.SKLFuncoes && !window.SKLFuncoes.ativa("repasses") ? "" : card("A repassar", r.a_repassar, "aos proprietários")}
             ${card("Receita da imobiliária", r.receita_mes, "taxa de adm. + intermediação no mês")}
             ${card("Contratos ativos", null, `${dinheiro(r.carteira_mensal || 0)} por mês`, false, r.contratos_ativos || 0)}
           </div>

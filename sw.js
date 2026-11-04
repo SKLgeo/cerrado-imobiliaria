@@ -2,7 +2,7 @@
 // Rede primeiro (o corretor sempre vê a versão nova); sem internet, usa a última cópia guardada.
 // O nome do cache tem prefixo do cliente e a limpeza só apaga caches com esse prefixo.
 const CACHE_PREFIX = "cerrado-imobiliaria-imob-";
-const CACHE_NAME = CACHE_PREFIX + "0.14.9-mvudjx1f";
+const CACHE_NAME = CACHE_PREFIX + "0.17.0-mw1dkna8";
 const CORE_ASSETS = [ "./", "./index.html", "./styles.css", "./app.js", "./marca.js", "./logo.png", "./manifest.webmanifest",
   "./assets/icons/icon-192.png", "./assets/icons/icon-512.png", "./vendor/supabase/supabase.js" ];
 
@@ -36,7 +36,9 @@ self.addEventListener("push", (event) => {
   try { d = event.data ? event.data.json() : {}; } catch (e) { d = { titulo: "Aviso", corpo: event.data ? event.data.text() : "" }; }
   const icone = new URL("./assets/icons/icon-192.png", self.registration.scope).href;
   event.waitUntil(self.registration.showNotification(d.titulo || "Aviso", {
-    body: d.corpo || "", tag: d.id || undefined, renotify: !!d.id, icon: icone, badge: icone, data: { aviso: d }
+    body: d.corpo || "", tag: d.id || undefined, renotify: !!d.id, icon: icone, badge: icone, data: { aviso: d },
+    // compromisso, lembrete, contato novo e teste: ficam na tela até a pessoa tocar e vibram mais forte
+    requireInteraction: [ "agenda", "lembrete", "lead", "teste" ].includes(d.tipo), vibrate: [ 300, 120, 300, 120, 500 ], silent: false
   }));
 });
 self.addEventListener("notificationclick", (event) => {
