@@ -1,11 +1,11 @@
 {
- "0025": {
-  "foto": "https://xigwlofqkmiibzbongkn.supabase.co/storage/v1/object/sign/fotos-construcoes/34d57f61-154f-4d54-ab97-b0748bcb8f57/a7ba6eb7-347c-4089-8d5f-c0e6893f9969/site_01.jpg",
-  "img": "mvrao2gl"
- },
  "00109": {
   "foto": "https://xigwlofqkmiibzbongkn.supabase.co/storage/v1/object/sign/fotos-construcoes/34d57f61-154f-4d54-ab97-b0748bcb8f57/7c9535ff-5467-4ab3-a9bb-6fcea82b0505/site_01.jpg",
   "img": "mvrao2ic"
+ },
+ "0025": {
+  "foto": "https://xigwlofqkmiibzbongkn.supabase.co/storage/v1/object/sign/fotos-construcoes/34d57f61-154f-4d54-ab97-b0748bcb8f57/a7ba6eb7-347c-4089-8d5f-c0e6893f9969/site_01.jpg",
+  "img": "mvrao2gl"
  },
  "00246": {
   "foto": "https://xigwlofqkmiibzbongkn.supabase.co/storage/v1/object/sign/fotos-construcoes/34d57f61-154f-4d54-ab97-b0748bcb8f57/c65a1229-424d-46a2-a802-614536e91279/1793976776995_Rua_Suburbana_com_Casas_e_Palmeiras.jpg",
@@ -18,6 +18,10 @@
  "00171": {
   "foto": "https://xigwlofqkmiibzbongkn.supabase.co/storage/v1/object/sign/fotos-construcoes/34d57f61-154f-4d54-ab97-b0748bcb8f57/6dedd4f1-89a6-4d82-938e-a4c883e52e05/1793899215188_WhatsApp_Image_2026-11-05_at_13.09.11.jpg",
   "img": "mw40nk5e"
+ },
+ "00250": {
+  "foto": "https://xigwlofqkmiibzbongkn.supabase.co/storage/v1/object/sign/fotos-construcoes/34d57f61-154f-4d54-ab97-b0748bcb8f57/ec5ac467-f73e-4174-b751-1d78c74a511d/1794252771680_WhatsApp_Image_2026-11-09_at_14.45.29__2_.jpg",
+  "img": "mw9p3g0x"
  },
  "0084": {
   "foto": "https://xigwlofqkmiibzbongkn.supabase.co/storage/v1/object/sign/fotos-construcoes/34d57f61-154f-4d54-ab97-b0748bcb8f57/1e3a4b6d-193e-4124-b415-7f470e4cdc58/site_01.jpg",
@@ -70,10 +74,6 @@
  "00232": {
   "foto": "https://xigwlofqkmiibzbongkn.supabase.co/storage/v1/object/sign/fotos-construcoes/34d57f61-154f-4d54-ab97-b0748bcb8f57/8a144abf-acc2-4bcd-bc62-ee22bf32a303/1793710744704_A221824A-8F6C-42C4-9D1C-B971CDA2AA08.jpg",
   "img": "mw10uipd"
- },
- "00234": {
-  "foto": "https://xigwlofqkmiibzbongkn.supabase.co/storage/v1/object/sign/fotos-construcoes/34d57f61-154f-4d54-ab97-b0748bcb8f57/54df92fb-26ae-48ef-b5ac-fad09d120e40/1793729281990_WhatsApp_Image_2026-11-03_at_13.31.51.jpg",
-  "img": "mw10uhno"
  },
  "00236": {
   "foto": "https://xigwlofqkmiibzbongkn.supabase.co/storage/v1/object/sign/fotos-construcoes/34d57f61-154f-4d54-ab97-b0748bcb8f57/8610677e-ff3f-4bc4-a765-9319c2607206/1793729991874_Fachada_moderna_de_sobrado_geminado.jpg",
@@ -254,10 +254,6 @@
  "00208": {
   "foto": "https://xigwlofqkmiibzbongkn.supabase.co/storage/v1/object/sign/fotos-construcoes/34d57f61-154f-4d54-ab97-b0748bcb8f57/7a44bad6-4b94-4bac-ab6d-896a290e20f4/site_01.jpg",
   "img": "mvrao7ap"
- },
- "00150": {
-  "foto": "https://xigwlofqkmiibzbongkn.supabase.co/storage/v1/object/sign/fotos-construcoes/34d57f61-154f-4d54-ab97-b0748bcb8f57/998fead8-672e-4e5f-8371-2e1db649822d/site_01.jpg",
-  "img": "mvrao7c5"
  },
  "00210": {
   "foto": "https://xigwlofqkmiibzbongkn.supabase.co/storage/v1/object/sign/fotos-construcoes/34d57f61-154f-4d54-ab97-b0748bcb8f57/6f9f2b0e-939b-4560-baf4-66a18f36f3da/site_01.jpg",
