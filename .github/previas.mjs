@@ -55,7 +55,8 @@ for (let k = 0; k < lista.length; k += 6) {
     const foto = (i.fotos_url || [])[0] || "";
     const fotoChave = foto.split("?")[0];          // o link assinado muda a cada leitura; o caminho da foto não
     const e = i.endereco || {};
-    const precos = [ i.valor_venda ? "Venda " + dinheiro(i.valor_venda) : "", i.valor_aluguel ? "Aluguel " + dinheiro(i.valor_aluguel) + "/mês" : "" ].filter(Boolean).join(" · ");
+    const ap = i.valor_a_partir ? "a partir de " : "";
+    const precos = [ i.valor_venda ? "Venda " + ap + dinheiro(i.valor_venda) : "", i.valor_aluguel ? "Aluguel " + ap + dinheiro(i.valor_aluguel) + "/mês" : "" ].filter(Boolean).join(" · ");
     const desc = [ [ e.bairro, e.cidade ].filter(Boolean).join(", "), precos ].filter(Boolean).join(" · ") || "Veja fotos e detalhes do imóvel.";
     const antes = indice[i.codigo] || {};
     const html = path.join(pasta, i.codigo + ".html"), jpg = path.join(pasta, i.codigo + ".jpg");
