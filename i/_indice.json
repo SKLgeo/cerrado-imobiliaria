@@ -7,13 +7,13 @@
   "foto": "https://xigwlofqkmiibzbongkn.supabase.co/storage/v1/object/sign/fotos-construcoes/34d57f61-154f-4d54-ab97-b0748bcb8f57/12498874-5c38-4b2a-bb8d-e78b10202923/1794319443661_e4b88b23-b557-4290-b591-57f06ea971f0.jpg",
   "img": "mwb08feb"
  },
- "0025": {
-  "foto": "https://xigwlofqkmiibzbongkn.supabase.co/storage/v1/object/sign/fotos-construcoes/34d57f61-154f-4d54-ab97-b0748bcb8f57/a7ba6eb7-347c-4089-8d5f-c0e6893f9969/site_01.jpg",
-  "img": "mvrao2gl"
- },
  "00109": {
   "foto": "https://xigwlofqkmiibzbongkn.supabase.co/storage/v1/object/sign/fotos-construcoes/34d57f61-154f-4d54-ab97-b0748bcb8f57/7c9535ff-5467-4ab3-a9bb-6fcea82b0505/site_01.jpg",
   "img": "mvrao2ic"
+ },
+ "0025": {
+  "foto": "https://xigwlofqkmiibzbongkn.supabase.co/storage/v1/object/sign/fotos-construcoes/34d57f61-154f-4d54-ab97-b0748bcb8f57/a7ba6eb7-347c-4089-8d5f-c0e6893f9969/site_01.jpg",
+  "img": "mvrao2gl"
  },
  "00275": {
   "foto": "https://xigwlofqkmiibzbongkn.supabase.co/storage/v1/object/sign/fotos-construcoes/34d57f61-154f-4d54-ab97-b0748bcb8f57/42c2cc9f-3faf-4a97-9681-dc48c7be5811/1794942085651_WhatsApp_Image_2026-11-16_at_17.32.41.jpg",
@@ -183,10 +183,6 @@
   "foto": "https://xigwlofqkmiibzbongkn.supabase.co/storage/v1/object/sign/fotos-construcoes/34d57f61-154f-4d54-ab97-b0748bcb8f57/bbfa19eb-dd1a-427e-b18b-7211bbb4159f/site_01.jpg",
   "img": "mvrao2wp"
  },
- "00175": {
-  "foto": "https://xigwlofqkmiibzbongkn.supabase.co/storage/v1/object/sign/fotos-construcoes/34d57f61-154f-4d54-ab97-b0748bcb8f57/8df98503-9d46-4cbf-ad17-45f65ed8713c/site_01.jpg",
-  "img": "mvrao6ag"
- },
  "0029": {
   "foto": "https://xigwlofqkmiibzbongkn.supabase.co/storage/v1/object/sign/fotos-construcoes/34d57f61-154f-4d54-ab97-b0748bcb8f57/04475483-a947-4262-b09f-a71c06ffd697/site_01.jpg",
   "img": "mvrao6dw"
@@ -262,10 +258,6 @@
  "0074": {
   "foto": "https://xigwlofqkmiibzbongkn.supabase.co/storage/v1/object/sign/fotos-construcoes/34d57f61-154f-4d54-ab97-b0748bcb8f57/b08452c5-832a-4418-8d68-4e97d2411fbd/site_01.jpg",
   "img": "mvrao7s0"
- },
- "0053": {
-  "foto": "https://xigwlofqkmiibzbongkn.supabase.co/storage/v1/object/sign/fotos-construcoes/34d57f61-154f-4d54-ab97-b0748bcb8f57/cbc35c2b-1e32-4df1-a7a0-59b24e1540a5/site_01.jpg",
-  "img": "mvrao868"
  },
  "00199": {
   "foto": "https://xigwlofqkmiibzbongkn.supabase.co/storage/v1/object/sign/fotos-construcoes/34d57f61-154f-4d54-ab97-b0748bcb8f57/c0bb144a-203d-4d0e-b17a-ae502229c010/site_01.jpg",
@@ -382,10 +374,6 @@
  "00164": {
   "foto": "https://xigwlofqkmiibzbongkn.supabase.co/storage/v1/object/sign/fotos-construcoes/34d57f61-154f-4d54-ab97-b0748bcb8f57/ea632442-f095-459c-901d-7aa2f3b2710c/site_01.jpg",
   "img": "mvraoa75"
- },
- "00147": {
-  "foto": "https://xigwlofqkmiibzbongkn.supabase.co/storage/v1/object/sign/fotos-construcoes/34d57f61-154f-4d54-ab97-b0748bcb8f57/38c9eda3-d99a-4b7e-bdce-30a308224d6e/site_01.jpg",
-  "img": "mvraoa7j"
  },
  "00204": {
   "foto": "https://xigwlofqkmiibzbongkn.supabase.co/storage/v1/object/sign/fotos-construcoes/34d57f61-154f-4d54-ab97-b0748bcb8f57/1ae19379-2e41-4e0b-bb36-cbdaccbbfab4/site_01.jpg",
@@ -542,6 +530,10 @@
  "00214": {
   "foto": "https://xigwlofqkmiibzbongkn.supabase.co/storage/v1/object/sign/fotos-construcoes/34d57f61-154f-4d54-ab97-b0748bcb8f57/fd086dce-951a-4442-8830-bae99b8a0d74/site_01.jpg",
   "img": "mvrao5ym"
+ },
+ "00175": {
+  "foto": "https://xigwlofqkmiibzbongkn.supabase.co/storage/v1/object/sign/fotos-construcoes/34d57f61-154f-4d54-ab97-b0748bcb8f57/8df98503-9d46-4cbf-ad17-45f65ed8713c/site_01.jpg",
+  "img": "mvrao6ag"
  },
  "0052": {
   "foto": "https://xigwlofqkmiibzbongkn.supabase.co/storage/v1/object/sign/fotos-construcoes/34d57f61-154f-4d54-ab97-b0748bcb8f57/e4f3b266-e2f5-42b1-9478-32c4d3c43fe3/site_01.jpg",
